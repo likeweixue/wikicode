@@ -97,15 +97,72 @@ function active_class(bool $active): string
     return $active ? ' is-active' : '';
 }
 
+/**
+ * 将 Markdown 文本拆成行，并为 1–3 级标题生成稳定且唯一的锚点 ID。
+ *
+ * @return list<array{type: string, level?: int, text: string, id?: string}>
+ */
+function markdown_parse(string $text): array
+{
+    $lines = [];
+    $used = [];
+    foreach (preg_split('/\R/', $text) as $line) {
+        if (preg_match('/^(#{1,3})\s+(.+?)\s*#*\s*$/', $line, $matches)) {
+            $title = trim($matches[2]);
+            $base = markdown_slug($title);
+            $id = $base;
+            $suffix = 2;
+            while (isset($used[$id])) {
+                $id = $base . '-' . $suffix++;
+            }
+            $used[$id] = true;
+            $lines[] = ['type' => 'heading', 'level' => strlen($matches[1]), 'text' => $title, 'id' => $id];
+        } else {
+            $lines[] = ['type' => 'text', 'text' => $line];
+        }
+    }
+    return $lines;
+}
+
+function markdown_slug(string $text): string
+{
+    $slug = mb_strtolower(trim(strip_tags($text)), 'UTF-8');
+    $slug = preg_replace('/[^\p{L}\p{N}]+/u', '-', $slug) ?? '';
+    $slug = trim($slug, '-');
+    return $slug !== '' ? $slug : 'section';
+}
+
+/**
+ * 提取 Markdown 标题，用于生成目录。
+ *
+ * @return list<array{level: int, text: string, id: string}>
+ */
+function markdown_toc(string $text): array
+{
+    $toc = [];
+    foreach (markdown_parse($text) as $line) {
+        if ($line['type'] === 'heading') {
+            $toc[] = ['level' => $line['level'], 'text' => $line['text'], 'id' => $line['id']];
+        }
+    }
+    return $toc;
+}
+
 function render_markdown(string $text): string
 {
-    $escaped = e($text);
-    $escaped = preg_replace('/^###\s+(.+)$/m', '<h3>$1</h3>', $escaped);
-    $escaped = preg_replace('/^##\s+(.+)$/m', '<h2>$1</h2>', $escaped);
-    $escaped = preg_replace('/^#\s+(.+)$/m', '<h1>$1</h1>', $escaped);
-    $escaped = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $escaped);
-    $escaped = preg_replace('/`([^`\n]+)`/', '<code>$1</code>', $escaped);
-    return nl2br($escaped, false);
+    $out = [];
+    foreach (markdown_parse($text) as $line) {
+        if ($line['type'] === 'heading') {
+            $level = $line['level'];
+            $out[] = '<h' . $level . ' id="' . e($line['id']) . '">' . e($line['text']) . '</h' . $level . '>';
+        } else {
+            $out[] = e($line['text']);
+        }
+    }
+    $html = implode("\n", $out);
+    $html = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $html) ?? $html;
+    $html = preg_replace('/`([^`\n]+)`/', '<code>$1</code>', $html) ?? $html;
+    return nl2br($html, false);
 }
 
 function ngettext(string $singular, string $plural, int $count): string

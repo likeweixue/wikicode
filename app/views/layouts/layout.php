@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <title><?= e($title ?? setting('site_name', 'wikicode')) ?></title>
-    <link rel="stylesheet" href="/assets/app.css">
-    <script src="/assets/app.js" defer></script>
+    <link rel="stylesheet" href="/assets/app.css?v=<?= e((string) (@filemtime(__DIR__ . '/../../../public/assets/app.css') ?: 1)) ?>">
+    <script src="/assets/app.js?v=<?= e((string) (@filemtime(__DIR__ . '/../../../public/assets/app.js') ?: 1)) ?>" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content"><?= t('Skip to content') ?></a>
@@ -25,6 +25,7 @@
         </button>
         <nav class="main-nav" id="main-nav" data-nav>
             <a href="/"><?= t('Explore') ?></a>
+            <a href="/community" class="<?= active_class(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/community' || str_starts_with((string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/community/')) ?>"><?= t('Community') ?></a>
             <?php if ($currentUser): ?>
                 <a href="/dashboard"><?= t('Dashboard') ?></a>
                 <a href="/new"><?= t('New repository') ?></a>

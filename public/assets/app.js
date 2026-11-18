@@ -48,4 +48,60 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         dropdowns.forEach((d) => { if (d.open && !d.contains(e.target)) d.open = false; });
     });
+
+    // README 目录：默认展开，可折叠
+    const tocShell = document.querySelector('[data-readme-shell]');
+    const tocToggle = document.querySelector('[data-toc-toggle]');
+    if (tocShell && tocToggle) {
+        const storageKey = 'wikicode:readme-toc-collapsed';
+        const apply = (collapsed) => {
+            tocShell.classList.toggle('is-collapsed', collapsed);
+            tocToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            try { localStorage.setItem(storageKey, collapsed ? '1' : '0'); } catch (_) {}
+        };
+        try { apply(localStorage.getItem(storageKey) === '1'); } catch (_) {}
+        tocToggle.addEventListener('click', () => {
+            apply(!tocShell.classList.contains('is-collapsed'));
+        });
+    }
+
+    // 新建文件页：许可证模板搜索与插入
+    const licenseHelper = document.querySelector('[data-license-helper]');
+    const licenseData = document.getElementById('license-data');
+    if (licenseHelper && licenseData) {
+        let licenses = [];
+        try { licenses = JSON.parse(licenseData.textContent || '[]'); } catch (_) {}
+        const searchInput = licenseHelper.querySelector('[data-license-search]');
+        const results = licenseHelper.querySelector('[data-license-results]');
+        const pathInput = document.querySelector('input[name="file_path"]');
+        const contentInput = document.querySelector('textarea[name="content"]');
+        const messageInput = document.querySelector('input[name="message"]');
+        const renderResults = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            results.innerHTML = '';
+            if (!query) return;
+            licenses
+                .filter((item) => (item.name + ' ' + item.id).toLowerCase().includes(query))
+                .slice(0, 6)
+                .forEach((item) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'license-card';
+                    const title = document.createElement('strong');
+                    title.textContent = item.name;
+                    const meta = document.createElement('span');
+                    meta.textContent = item.id.toUpperCase();
+                    button.append(title, meta);
+                    button.addEventListener('click', () => {
+                        if (pathInput && pathInput.value.trim() === '') pathInput.value = 'LICENSE';
+                        if (contentInput) contentInput.value = item.body;
+                        if (messageInput && messageInput.value.trim() === '') messageInput.value = 'Add ' + item.name;
+                        searchInput.value = item.name;
+                        results.innerHTML = '';
+                    });
+                    results.appendChild(button);
+                });
+        };
+        searchInput.addEventListener('input', renderResults);
+    }
 });

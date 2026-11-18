@@ -8,6 +8,7 @@ use App\Core\Auth;
 use App\Core\Database;
 use App\Core\View;
 use App\Services\GitService;
+use App\Services\LicenseService;
 use App\Services\RepositoryService;
 use InvalidArgumentException;
 use Throwable;
@@ -163,6 +164,8 @@ final class RepositoryController
         }
         $this->attachCounts($repository);
         $sidebar = self::sidebarData($repository);
+        $search = trim((string) ($_GET['q'] ?? ''));
+        $searchResults = $search !== '' ? $git->searchFiles($branch, $search, 50) : [];
         View::render('repositories/show', [
             'title' => $repository['username'] . '/' . $repository['name'],
             'repository' => $repository,
@@ -176,6 +179,8 @@ final class RepositoryController
             'readme' => $readme,
             'sidebar' => $sidebar,
             'tags' => $git->tags(),
+            'search' => $search,
+            'searchResults' => $searchResults,
         ]);
     }
 
@@ -401,6 +406,19 @@ final class RepositoryController
             }
         }
         $this->attachCounts($repository);
+        $licenseTemplates = [];
+        foreach (LicenseService::available() as $licenseId => $licenseInfo) {
+            $licenseTemplates[] = [
+                'id' => $licenseId,
+                'name' => $licenseInfo['name'],
+                'body' => LicenseService::render($licenseId, [
+                    'year' => (string) date('Y'),
+                    'author' => (string) (Auth::user()['username'] ?? ''),
+                    'project' => (string) $repository['name'],
+                    'projecturl' => app_url($repository['username'] . '/' . $repository['name']),
+                ]),
+            ];
+        }
         View::render('repositories/new_file', [
             'title' => t('Add file'),
             'repository' => $repository,
@@ -408,6 +426,7 @@ final class RepositoryController
             'branch' => $branch,
             'path' => $path,
             'error' => $error,
+            'licenseTemplates' => $licenseTemplates,
             'sidebar' => self::sidebarData($repository),
         ]);
     }

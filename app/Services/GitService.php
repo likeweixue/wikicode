@@ -526,6 +526,36 @@ final class GitService
     }
 
     /**
+     * 按路径关键字搜索仓库中的文件。
+     *
+     * @return string[]
+     */
+    public function searchFiles(string $branch, string $query, int $limit = 50): array
+    {
+        $needle = mb_strtolower(trim($query), 'UTF-8');
+        if ($needle === '') {
+            return [];
+        }
+        $result = $this->run(['ls-tree', '-r', '--name-only', $branch]);
+        if (!$result['success']) {
+            return [];
+        }
+        $matches = [];
+        foreach (preg_split('/\r?\n/', trim($result['stdout'])) ?: [] as $path) {
+            if ($path === '') {
+                continue;
+            }
+            if (mb_strpos(mb_strtolower($path, 'UTF-8'), $needle) !== false) {
+                $matches[] = $path;
+                if (count($matches) >= $limit) {
+                    break;
+                }
+            }
+        }
+        return $matches;
+    }
+
+    /**
      * 将某个 ref 打包为 zip 文件，返回是否成功。
      */
     public function archive(string $ref, string $outputFile): bool

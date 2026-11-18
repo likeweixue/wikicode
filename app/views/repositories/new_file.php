@@ -11,6 +11,20 @@
                 <input type="text" name="file_path" maxlength="255" placeholder="src/example.php" value="<?= e($_POST['file_path'] ?? '') ?>">
                 <small class="field-hint"><?= $path !== '' ? e($path . '/') : '' ?><?= t('Use / to create subdirectories.') ?></small>
             </label>
+            <?php $licenseTemplates = $licenseTemplates ?? []; ?>
+            <?php if ($licenseTemplates): ?>
+            <div class="license-helper" data-license-helper>
+                <label><span><?= t('License template') ?></span>
+                    <input type="text" data-license-search list="license-names" placeholder="<?= t('Type MIT, GPL, Apache...') ?>" autocomplete="off">
+                    <small class="field-hint"><?= t('Type a license name to insert a ready-made LICENSE file.') ?></small>
+                </label>
+                <datalist id="license-names">
+                    <?php foreach ($licenseTemplates as $tpl): ?><option value="<?= e($tpl['name']) ?>"></option><?php endforeach; ?>
+                </datalist>
+                <div class="license-results" data-license-results></div>
+            </div>
+            <script type="application/json" id="license-data"><?= json_encode($licenseTemplates, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+            <?php endif; ?>
             <label><span><?= t('Or upload a file') ?></span>
                 <input type="file" name="upload">
                 <small class="field-hint"><?= t('Max 2 MiB. If a name is left empty, the uploaded file name is used.') ?></small>

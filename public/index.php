@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
+use App\Controllers\AdminCommunityController;
 use App\Controllers\DashboardController;
+use App\Controllers\ForumController;
 use App\Controllers\HomeController;
 use App\Controllers\InsightsController;
 use App\Controllers\IssueController;
@@ -26,6 +28,12 @@ try {
     Router::post('/locale', [AuthController::class, 'locale']);
     Router::post('/theme', [AuthController::class, 'theme']);
     Router::get('/dashboard', [DashboardController::class, 'index']);
+    Router::get('/community', [ForumController::class, 'index']);
+    Router::get('/community/board/{board}', [ForumController::class, 'board']);
+    Router::get('/community/board/{board}/new', [ForumController::class, 'createTopic']);
+    Router::post('/community/board/{board}/new', [ForumController::class, 'createTopic']);
+    Router::get('/community/topic/{topic}', [ForumController::class, 'topic']);
+    Router::post('/community/topic/{topic}/reply', [ForumController::class, 'reply']);
     Router::get('/admin', [AdminController::class, 'dashboard']);
     Router::get('/admin/users', [AdminController::class, 'users']);
     Router::post('/admin/users/{id}/toggle', [AdminController::class, 'toggleUser']);
@@ -38,6 +46,13 @@ try {
     Router::get('/admin/settings/mail', [AdminController::class, 'mailSettings']);
     Router::post('/admin/settings/mail', [AdminController::class, 'saveMailSettings']);
     Router::post('/admin/settings/mail/test', [AdminController::class, 'testMail']);
+    Router::get('/admin/community', [AdminCommunityController::class, 'index']);
+    Router::post('/admin/community/categories', [AdminCommunityController::class, 'storeCategory']);
+    Router::post('/admin/community/categories/{id}', [AdminCommunityController::class, 'updateCategory']);
+    Router::post('/admin/community/categories/{id}/delete', [AdminCommunityController::class, 'deleteCategory']);
+    Router::post('/admin/community/boards', [AdminCommunityController::class, 'storeBoard']);
+    Router::post('/admin/community/boards/{id}', [AdminCommunityController::class, 'updateBoard']);
+    Router::post('/admin/community/boards/{id}/delete', [AdminCommunityController::class, 'deleteBoard']);
     Router::get('/new', [RepositoryController::class, 'create']);
     Router::post('/new', [RepositoryController::class, 'store']);
 
