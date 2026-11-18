@@ -107,3 +107,14 @@ function render_markdown(string $text): string
     $escaped = preg_replace('/`([^`\n]+)`/', '<code>$1</code>', $escaped);
     return nl2br($escaped, false);
 }
+
+function ngettext(string $singular, string $plural, int $count): string
+{
+    return $count === 1 ? $singular : $plural;
+}
+
+function ngettext_placeholder(string $singular, string $plural, int $count, string $param = ':count'): string
+{
+    $template = $count === 1 ? $singular : $plural;
+    return str_replace($param, (string) $count, $template);
+}

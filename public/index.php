@@ -6,9 +6,11 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\HomeController;
+use App\Controllers\InsightsController;
 use App\Controllers\IssueController;
 use App\Controllers\PullRequestController;
 use App\Controllers\RepositoryController;
+use App\Controllers\WikiController;
 use App\Core\Router;
 use App\Core\View;
 
@@ -56,10 +58,28 @@ try {
     Router::get('/{owner}/{repo}/blob', [RepositoryController::class, 'blob']);
     Router::get('/{owner}/{repo}/raw', [RepositoryController::class, 'raw']);
     Router::get('/{owner}/{repo}/commits', [RepositoryController::class, 'commits']);
+    Router::get('/{owner}/{repo}/archive', [RepositoryController::class, 'archive']);
+    Router::get('/{owner}/{repo}/new-file', [RepositoryController::class, 'newFile']);
+    Router::post('/{owner}/{repo}/new-file', [RepositoryController::class, 'newFile']);
     Router::get('/{owner}/{repo}/commit/{sha}', [RepositoryController::class, 'commit']);
     Router::get('/{owner}/{repo}/settings', [RepositoryController::class, 'settings']);
     Router::post('/{owner}/{repo}/settings', [RepositoryController::class, 'update']);
     Router::post('/{owner}/{repo}/delete', [RepositoryController::class, 'delete']);
+    Router::post('/{owner}/{repo}/star', [RepositoryController::class, 'toggleStar']);
+    Router::post('/{owner}/{repo}/watch', [RepositoryController::class, 'toggleWatch']);
+
+    // Wiki
+    Router::get('/{owner}/{repo}/wiki', [WikiController::class, 'index']);
+    Router::get('/{owner}/{repo}/wiki/_new', [WikiController::class, 'create']);
+    Router::post('/{owner}/{repo}/wiki/_new', [WikiController::class, 'create']);
+    Router::get('/{owner}/{repo}/wiki/{slug}/_edit', [WikiController::class, 'edit']);
+    Router::post('/{owner}/{repo}/wiki/{slug}/_edit', [WikiController::class, 'edit']);
+    Router::post('/{owner}/{repo}/wiki/{slug}/_delete', [WikiController::class, 'delete']);
+    Router::get('/{owner}/{repo}/wiki/{slug}', [WikiController::class, 'show']);
+
+    // Insights
+    Router::get('/{owner}/{repo}/insights', [InsightsController::class, 'index']);
+
     Router::get('/{owner}/{repo}', [RepositoryController::class, 'show']);
 
     Router::dispatch($_SERVER['REQUEST_METHOD'], parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));

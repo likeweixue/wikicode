@@ -16,6 +16,30 @@ use Throwable;
 
 final class RepositoryService
 {
+    /**
+     * 根据扩展名粗判编程语言 => 颜色。
+     *
+     * @return array<string, string>
+     */
+    public static function languageColors(): array
+    {
+        return [
+            'PHP' => '#8892bf', 'HTML' => '#e34c26', 'CSS' => '#563d7c',
+            'SCSS' => '#c6538c', 'JavaScript' => '#f1e05a', 'TypeScript' => '#3178c6',
+            'JSON' => '#292929', 'Markdown' => '#083fa1', 'Python' => '#3572A5',
+            'Ruby' => '#701516', 'Go' => '#00ADD8', 'Rust' => '#dea584',
+            'Java' => '#b07219', 'Kotlin' => '#A97BFF', 'Swift' => '#F05138',
+            'C' => '#555555', 'C++' => '#f34b7d', 'C#' => '#178600',
+            'Shell' => '#89e051', 'YAML' => '#cb171e', 'SQL' => '#e38c00',
+            'Vue' => '#41b883', 'Svelte' => '#ff3e00', 'Dart' => '#00B4AB',
+            'Elixir' => '#6e4a7e', 'Erlang' => '#B83998', 'Haskell' => '#5e5086',
+            'Scala' => '#c22d40', 'R' => '#198CE7', 'Lua' => '#000080',
+            'Perl' => '#0298c3', 'GraphQL' => '#e10098', 'Dockerfile' => '#384d54',
+            'Makefile' => '#427819', 'Terraform' => '#844FBA', 'XML' => '#0060ac',
+            'INI' => '#d18c8d', 'Config' => '#d18c8d',
+        ];
+    }
+
     public static function find(string $ownerUsername, string $repoName): ?array
     {
         return Database::fetch(
@@ -79,12 +103,19 @@ final class RepositoryService
         );
     }
 
-    public static function create(int $ownerId, string $name, string $description, string $visibility): array
+    public static function create(int $ownerId, string $name, string $description, string $visibility, string $homepage = '', string $license = ''): array
     {
         self::assertPositiveId($ownerId);
         self::assertValidRepositoryName($name);
         self::assertValidDescription($description);
         self::assertValidVisibility($visibility);
+
+        if ($homepage !== '') {
+            self::assertValidHomepage($homepage);
+        }
+        if ($license !== '' && !LicenseService::exists($license)) {
+            $license = '';
+        }
 
         $owner = Database::fetch('SELECT id, username FROM users WHERE id = ? LIMIT 1', [$ownerId]);
         if ($owner === null) {
@@ -101,13 +132,15 @@ final class RepositoryService
                 $name,
                 $description,
                 $visibility,
+                $homepage,
+                $license,
                 &$path,
                 &$cleanPathOnFailure
             ): int {
                 Database::execute(
-                    'INSERT INTO repositories (owner_id, name, description, visibility, default_branch) '
-                    . 'VALUES (?, ?, ?, ?, \'main\')',
-                    [$ownerId, $name, $description, $visibility]
+                    'INSERT INTO repositories (owner_id, name, description, visibility, homepage, license, default_branch) '
+                    . 'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [$ownerId, $name, $description, $visibility, $homepage, $license, 'main']
                 );
 
                 $id = (int) $pdo->lastInsertId();
@@ -142,7 +175,7 @@ final class RepositoryService
                     $git->run(['config', '--local', 'http.receivepack', 'true']),
                     'Unable to enable Git push over HTTP'
                 );
-                self::createInitialCommit($git, $name, $description);
+                self::createInitialCommit($git, $name, $description, $license, (string) $owner['username']);
 
                 return $id;
             });
@@ -168,20 +201,23 @@ final class RepositoryService
         return $repository;
     }
 
-    public static function update(int $id, string $name, string $description, string $visibility): array
+    public static function update(int $id, string $name, string $description, string $visibility, string $homepage = ''): array
     {
         self::assertPositiveId($id);
         self::assertValidRepositoryName($name);
         self::assertValidDescription($description);
         self::assertValidVisibility($visibility);
+        if ($homepage !== '') {
+            self::assertValidHomepage($homepage);
+        }
 
         if (self::findById($id) === null) {
             throw new RuntimeException('Repository does not exist: ' . $id);
         }
 
         Database::execute(
-            'UPDATE repositories SET name = ?, description = ?, visibility = ? WHERE id = ?',
-            [$name, $description, $visibility, $id]
+            'UPDATE repositories SET name = ?, description = ?, visibility = ?, homepage = ? WHERE id = ?',
+            [$name, $description, $visibility, $homepage, $id]
         );
 
         $repository = self::findById($id);
@@ -204,7 +240,7 @@ final class RepositoryService
         return dirname(__DIR__, 2) . '/storage/repositories/' . $id . '.git';
     }
 
-    private static function createInitialCommit(GitService $git, string $name, string $description): void
+    private static function createInitialCommit(GitService $git, string $name, string $description, string $licenseId = '', string $author = ''): void
     {
         $readme = '# ' . $name . "\n\n";
         if ($description !== '') {
@@ -212,12 +248,25 @@ final class RepositoryService
         }
         $readme .= "此仓库由 WikiCode 创建，欢迎使用。\n";
 
-        $blob = self::gitObjectSha(
-            $git->run(['hash-object', '-w', '--stdin'], null, $readme),
-            'Unable to write initial README blob'
-        );
+        $files = [['100644', 'README.md', $readme]];
+
+        if ($licenseId !== '' && LicenseService::exists($licenseId)) {
+            $licenseBody = LicenseService::render($licenseId, [
+                'project' => $name,
+                'author' => $author,
+            ]);
+            $files[] = ['100644', 'LICENSE', $licenseBody];
+        }
+
+        $treeLines = '';
+        $entries = [];
+        foreach ($files as [$mode, $filename, $content]) {
+            $blobResult = $git->run(['hash-object', '-w', '--stdin'], null, $content);
+            $blobSha = self::gitObjectSha($blobResult, 'Unable to write blob for ' . $filename);
+            $treeLines .= $mode . ' blob ' . $blobSha . "\t" . $filename . "\n";
+        }
         $tree = self::gitObjectSha(
-            $git->run(['mktree'], null, '100644 blob ' . $blob . "\tREADME.md\n"),
+            $git->run(['mktree'], null, $treeLines),
             'Unable to create initial tree'
         );
         $commit = self::gitObjectSha(
@@ -283,11 +332,68 @@ final class RepositoryService
         }
     }
 
+    private static function assertValidHomepage(string $homepage): void
+    {
+        if (strlen($homepage) > 255) {
+            throw new InvalidArgumentException('Homepage URL must not exceed 255 characters.');
+        }
+        if (!preg_match('#^https?://[^\s<>"\']+$#i', $homepage)) {
+            throw new InvalidArgumentException('Homepage must be a valid http:// or https:// URL.');
+        }
+    }
+
     private static function assertPositiveId(int $id): void
     {
         if ($id < 1) {
             throw new InvalidArgumentException('ID must be a positive integer.');
         }
+    }
+
+    // ———————————————— Star / Watch / Fork 统计与操作 ————————————————
+
+    public static function starCount(int $repositoryId): int
+    {
+        return (int) Database::fetch('SELECT COUNT(*) AS c FROM stars WHERE repository_id = ?', [$repositoryId])['c'];
+    }
+
+    public static function watchCount(int $repositoryId): int
+    {
+        return (int) Database::fetch('SELECT COUNT(*) AS c FROM watchers WHERE repository_id = ?', [$repositoryId])['c'];
+    }
+
+    public static function forkCount(int $repositoryId): int
+    {
+        return (int) Database::fetch('SELECT COUNT(*) AS c FROM forks WHERE repository_id = ?', [$repositoryId])['c'];
+    }
+
+    public static function isStarred(int $repositoryId, int $userId): bool
+    {
+        return (bool) Database::fetch('SELECT 1 FROM stars WHERE repository_id = ? AND user_id = ?', [$repositoryId, $userId]);
+    }
+
+    public static function isWatched(int $repositoryId, int $userId): bool
+    {
+        return (bool) Database::fetch('SELECT 1 FROM watchers WHERE repository_id = ? AND user_id = ?', [$repositoryId, $userId]);
+    }
+
+    public static function toggleStar(int $repositoryId, int $userId): bool
+    {
+        if (self::isStarred($repositoryId, $userId)) {
+            Database::execute('DELETE FROM stars WHERE repository_id = ? AND user_id = ?', [$repositoryId, $userId]);
+            return false;
+        }
+        Database::execute('INSERT IGNORE INTO stars (repository_id, user_id) VALUES (?, ?)', [$repositoryId, $userId]);
+        return true;
+    }
+
+    public static function toggleWatch(int $repositoryId, int $userId): bool
+    {
+        if (self::isWatched($repositoryId, $userId)) {
+            Database::execute('DELETE FROM watchers WHERE repository_id = ? AND user_id = ?', [$repositoryId, $userId]);
+            return false;
+        }
+        Database::execute('INSERT IGNORE INTO watchers (repository_id, user_id) VALUES (?, ?)', [$repositoryId, $userId]);
+        return true;
     }
 
     private static function removeDirectory(string $path): void

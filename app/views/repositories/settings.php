@@ -9,6 +9,7 @@
                 <label><span><?= t('Repository name') ?></span><input type="text" name="name" required maxlength="50" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,49}" value="<?= e($repository['name']) ?>"></label>
                 <label><span><?= t('Default branch') ?></span><select name="default_branch"><?php foreach ($branches as $branch): ?><option value="<?= e($branch) ?>" <?= $branch === $repository['default_branch'] ? 'selected' : '' ?>><?= e($branch) ?></option><?php endforeach; ?></select></label>
                 <label class="full"><span><?= t('Description') ?></span><input type="text" name="description" maxlength="255" value="<?= e($repository['description']) ?>"></label>
+                <label class="full"><span><?= t('Project homepage') ?></span><input type="url" name="homepage" maxlength="255" value="<?= e($repository['homepage'] ?? '') ?>" placeholder="https://example.com"></label>
                 <label><span><?= t('Visibility') ?></span><select name="visibility"><option value="public" <?= $repository['visibility'] === 'public' ? 'selected' : '' ?>><?= t('Public') ?></option><option value="private" <?= $repository['visibility'] === 'private' ? 'selected' : '' ?>><?= t('Private') ?></option></select></label>
             </div>
             <div class="form-actions"><button class="btn btn-primary" type="submit"><?= t('Save changes') ?> →</button></div>

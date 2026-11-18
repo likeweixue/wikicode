@@ -26,6 +26,17 @@ final class DashboardController
              WHERE r.visibility = \'public\' AND r.owner_id <> ? ORDER BY r.updated_at DESC LIMIT 5',
             [Auth::id()]
         );
+        $view = ($_GET['view'] ?? '') === 'starred' ? 'starred' : 'repositories';
+        $starredRepositories = Database::fetchAll(
+            'SELECT r.*, u.username,
+                (SELECT COUNT(*) FROM issues i WHERE i.repository_id = r.id AND i.status = \'open\') AS open_issues
+             FROM stars s
+             JOIN repositories r ON r.id = s.repository_id
+             JOIN users u ON u.id = r.owner_id
+             WHERE s.user_id = ? AND (r.visibility = \'public\' OR r.owner_id = ?)
+             ORDER BY s.created_at DESC',
+            [Auth::id(), Auth::id()]
+        );
         $stats = [
             'repositories' => count($repositories),
             'issues' => array_sum(array_map(static fn(array $repo): int => (int) $repo['open_issues'], $repositories)),
@@ -34,6 +45,8 @@ final class DashboardController
         View::render('dashboard', [
             'title' => t('Dashboard'),
             'repositories' => $repositories,
+            'starredRepositories' => $starredRepositories,
+            'view' => $view,
             'publicRepositories' => $publicRepositories,
             'stats' => $stats,
         ]);

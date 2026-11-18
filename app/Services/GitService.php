@@ -498,6 +498,198 @@ final class GitService
         return $path;
     }
 
+    /**
+     * 返回提交总数（仅默认分支可达历史）。
+     */
+    public function countCommits(string $branch): int
+    {
+        $result = $this->run(['rev-list', '--count', $branch]);
+        if (!$result['success']) {
+            return 0;
+        }
+        return max(0, (int) trim($result['stdout']));
+    }
+
+    /**
+     * 标签列表，按创建时间倒序。
+     *
+     * @return string[]
+     */
+    public function tags(): array
+    {
+        $result = $this->run(['tag', '--list', '--sort=-creatordate']);
+        if (!$result['success']) {
+            return [];
+        }
+        $lines = preg_split('/\r?\n/', trim($result['stdout'])) ?: [];
+        return array_values(array_filter($lines, static fn (string $l): bool => trim($l) !== ''));
+    }
+
+    /**
+     * 将某个 ref 打包为 zip 文件，返回是否成功。
+     */
+    public function archive(string $ref, string $outputFile): bool
+    {
+        $result = $this->run(['archive', '--format=zip', '--output=' . $outputFile, $ref]);
+        return $result['success'] && is_file($outputFile);
+    }
+
+    /**
+     * 在指定分支上创建（或覆盖）一个文件并提交。
+     * 通过临时 worktree 完成，提交后分支自动前进。
+     */
+    public function createFile(string $branch, string $path, string $content, string $message, string $authorName, string $authorEmail): void
+    {
+        $path = trim($path, '/');
+        if ($path === '' || str_contains($path, '..') || str_contains($path, "\0") || str_starts_with($path, '/')) {
+            throw new InvalidArgumentException('Invalid file path.');
+        }
+        if ($message === '') {
+            $message = 'Create ' . $path;
+        }
+
+        $tmpBase = dirname(__DIR__, 2) . '/storage/tmp';
+        if (!is_dir($tmpBase)) {
+            @mkdir($tmpBase, 0775, true);
+        }
+        $tmp = $tmpBase . '/wt_' . uniqid('', true);
+
+        $this->requireSuccess($this->run(['worktree', 'add', '--force', $tmp, $branch]), 'Unable to create worktree');
+        try {
+            $full = $tmp . '/' . $path;
+            $dir = dirname($full);
+            if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+                throw new RuntimeException('Unable to create directory for file.');
+            }
+            if (file_put_contents($full, $content) === false) {
+                throw new RuntimeException('Unable to write file content.');
+            }
+            $this->requireSuccess($this->run(['add', '--', $path], $tmp), 'git add failed');
+            $this->requireSuccess(
+                $this->run(['-c', 'user.name=' . $authorName, '-c', 'user.email=' . $authorEmail, 'commit', '-m', $message], $tmp),
+                'git commit failed'
+            );
+        } finally {
+            $this->run(['worktree', 'remove', '--force', $tmp]);
+        }
+    }
+
+    /**
+     * 贡献者统计：返回 [author_email => ['name' => author_name, 'commits' => int]]。
+     *
+     * @return array<string, array{name: string, commits: int}>
+     */
+    public function contributors(string $branch, int $limit = 30): array
+    {
+        $result = $this->run([
+            'log',
+            '--no-color',
+            '--format=%ae%x1f%an',
+            $branch,
+            '--',
+        ], null, '', 30, 8 * 1024 * 1024);
+
+        if (!$result['success']) {
+            return [];
+        }
+
+        $contributors = [];
+        foreach (preg_split('/\r?\n/', rtrim($result['stdout'], "\r\n")) ?: [] as $line) {
+            if ($line === '') {
+                continue;
+            }
+            $parts = explode("\x1f", $line, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            [$email, $name] = $parts;
+            $email = strtolower(trim($email));
+            if (!isset($contributors[$email])) {
+                $contributors[$email] = ['name' => trim($name), 'commits' => 0];
+            }
+            $contributors[$email]['commits']++;
+        }
+
+        usort($contributors, static fn (array $a, array $b): int => $b['commits'] <=> $a['commits']);
+        return array_slice($contributors, 0, $limit, true);
+    }
+
+    /**
+     * 按文件扩展名粗略估算语言占比。
+     *
+     * @return array<string, float>  语言名 => 百分比，已降序
+     */
+    public function languageStats(string $branch, int $top = 6): array
+    {
+        $result = $this->run([
+            'ls-tree',
+            '-r',
+            '-z',
+            '--name-only',
+            $branch,
+            '--',
+        ], null, '', 30, 16 * 1024 * 1024);
+
+        if (!$result['success']) {
+            return [];
+        }
+
+        $counts = [];
+        $total = 0;
+        foreach (explode("\0", $result['stdout']) as $path) {
+            if ($path === '' || str_starts_with($path, '.')) {
+                continue;
+            }
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $lang = self::EXT_MAP[$ext] ?? null;
+            if ($lang === null) {
+                continue;
+            }
+            $counts[$lang] = ($counts[$lang] ?? 0) + 1;
+            $total++;
+        }
+
+        if ($total === 0) {
+            return [];
+        }
+
+        $stats = [];
+        foreach ($counts as $lang => $count) {
+            $stats[$lang] = round(($count / $total) * 100, 1);
+        }
+        arsort($stats);
+        return array_slice($stats, 0, $top, true);
+    }
+
+    /**
+     * 按周统计提交数，返回最近 52 周 [week_key => count]。
+     *
+     * @return array<string, int>
+     */
+    public function commitsByWeek(string $branch, int $weeks = 52): array
+    {
+        $result = $this->run([
+            'log',
+            '--no-color',
+            '--format=%ad',
+            '--date=format:%Y-%W',
+            $branch,
+            '--',
+        ], null, '', 30, 8 * 1024 * 1024);
+
+        if (!$result['success']) {
+            return [];
+        }
+
+        $counts = [];
+        foreach (preg_split('/\r?\n/', rtrim($result['stdout'], "\r\n")) ?: [] as $week) {
+            if ($week !== '') {
+                $counts[$week] = ($counts[$week] ?? 0) + 1;
+            }
+        }
+        return $counts;
+    }
+
     /** @param array{success: bool, stdout: string, stderr: string, exit_code: int} $result */
     private function requireSuccess(array $result, string $message): void
     {
@@ -510,4 +702,57 @@ final class GitService
             $message . ': ' . ($error !== '' ? $error : 'Git exited with code ' . $result['exit_code'] . '.')
         );
     }
+
+    /** @var array<string, string>  扩展名到语言名的映射 */
+    private const EXT_MAP = [
+        'php' => 'PHP',
+        'html' => 'HTML',
+        'htm' => 'HTML',
+        'css' => 'CSS',
+        'scss' => 'SCSS',
+        'js' => 'JavaScript',
+        'jsx' => 'JavaScript',
+        'ts' => 'TypeScript',
+        'tsx' => 'TypeScript',
+        'json' => 'JSON',
+        'md' => 'Markdown',
+        'py' => 'Python',
+        'rb' => 'Ruby',
+        'go' => 'Go',
+        'rs' => 'Rust',
+        'java' => 'Java',
+        'kt' => 'Kotlin',
+        'swift' => 'Swift',
+        'c' => 'C',
+        'h' => 'C',
+        'cpp' => 'C++',
+        'hpp' => 'C++',
+        'cs' => 'C#',
+        'sh' => 'Shell',
+        'bash' => 'Shell',
+        'zsh' => 'Shell',
+        'yml' => 'YAML',
+        'yaml' => 'YAML',
+        'xml' => 'XML',
+        'sql' => 'SQL',
+        'vue' => 'Vue',
+        'svelte' => 'Svelte',
+        'dart' => 'Dart',
+        'ex' => 'Elixir',
+        'erl' => 'Erlang',
+        'hs' => 'Haskell',
+        'scala' => 'Scala',
+        'r' => 'R',
+        'lua' => 'Lua',
+        'pl' => 'Perl',
+        'coco' => 'Cocoa',
+        'graphql' => 'GraphQL',
+        'dockerfile' => 'Dockerfile',
+        'makefile' => 'Makefile',
+        'cmake' => 'CMake',
+        'tf' => 'Terraform',
+        'env' => 'Shell',
+        'ini' => 'INI',
+        'conf' => 'Config',
+    ];
 }

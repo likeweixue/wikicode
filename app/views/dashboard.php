@@ -15,8 +15,18 @@
 </section>
 
 <section class="section-block">
-    <div class="section-heading"><div><span class="section-code">PERSONAL ARCHIVE / INDEX</span><h2><?= t('Your repositories') ?></h2></div><a class="text-link" href="/new"><?= t('Initialize new') ?> ↗</a></div>
-    <?php $showOwner = false; require __DIR__ . '/components/repository_list.php'; ?>
+    <div class="section-heading">
+        <div><span class="section-code">PERSONAL ARCHIVE / INDEX</span><h2><?= $view === 'starred' ? t('My starred') : t('Your repositories') ?></h2></div>
+        <div class="view-tabs">
+            <a class="view-tab <?= $view === 'repositories' ? 'is-active' : '' ?>" href="/dashboard"><?= t('Your repositories') ?></a>
+            <a class="view-tab <?= $view === 'starred' ? 'is-active' : '' ?>" href="/dashboard?view=starred">★ <?= t('My starred') ?> <span class="view-tab-count"><?= count($starredRepositories) ?></span></a>
+        </div>
+    </div>
+    <?php if ($view === 'starred'): ?>
+        <?php $repositories = $starredRepositories; $showOwner = true; require __DIR__ . '/components/repository_list.php'; ?>
+    <?php else: ?>
+        <?php $showOwner = false; require __DIR__ . '/components/repository_list.php'; ?>
+    <?php endif; ?>
 </section>
 
 <?php if ($publicRepositories): ?>

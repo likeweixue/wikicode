@@ -37,4 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-auto-submit]').forEach((input) => {
         input.addEventListener('change', () => input.form?.submit());
     });
+
+    // 下拉菜单：互斥展开 + 点击外部关闭
+    const dropdowns = Array.from(document.querySelectorAll('details.dropdown'));
+    dropdowns.forEach((d) => {
+        d.addEventListener('toggle', () => {
+            if (d.open) dropdowns.forEach((o) => { if (o !== d) o.open = false; });
+        });
+    });
+    document.addEventListener('click', (e) => {
+        dropdowns.forEach((d) => { if (d.open && !d.contains(e.target)) d.open = false; });
+    });
 });

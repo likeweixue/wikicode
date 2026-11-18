@@ -26,7 +26,9 @@ final class RepositoryController
         $name = trim((string) ($_POST['name'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
         $visibility = ($_POST['visibility'] ?? '') === 'private' ? 'private' : 'public';
-        $values = compact('name', 'description', 'visibility');
+        $homepage = trim((string) ($_POST['homepage'] ?? ''));
+        $license = trim((string) ($_POST['license'] ?? ''));
+        $values = compact('name', 'description', 'visibility', 'homepage', 'license');
 
         if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,49}$/', $name) || str_ends_with(strtolower($name), '.git')) {
             View::render('repositories/create', [
@@ -44,9 +46,17 @@ final class RepositoryController
             ]);
             return;
         }
+        if ($homepage !== '' && !preg_match('#^https?://[^\s<>"\']+$#i', $homepage)) {
+            View::render('repositories/create', [
+                'title' => t('New repository'),
+                'error' => t('Homepage must be a valid http:// or https:// URL.'),
+                'values' => $values,
+            ]);
+            return;
+        }
 
         try {
-            $repository = RepositoryService::create((int) Auth::id(), $name, $description, $visibility);
+            $repository = RepositoryService::create((int) Auth::id(), $name, $description, $visibility, $homepage, $license);
         } catch (Throwable $exception) {
             error_log((string) $exception);
             View::render('repositories/create', [
@@ -58,6 +68,73 @@ final class RepositoryController
         }
         flash('success', t('Repository initialized with its first commit.'));
         redirect(repo_url($repository));
+    }
+
+    public static function sidebarData(array $repository): array
+    {
+        $starCount = RepositoryService::starCount((int) $repository['id']);
+        $watchCount = RepositoryService::watchCount((int) $repository['id']);
+        $forkCount = RepositoryService::forkCount((int) $repository['id']);
+        $isStarred = false;
+        $isWatched = false;
+        if (Auth::check()) {
+            $isStarred = RepositoryService::isStarred((int) $repository['id'], (int) Auth::id());
+            $isWatched = RepositoryService::isWatched((int) $repository['id'], (int) Auth::id());
+        }
+
+        $git = new GitService(RepositoryService::path((int) $repository['id']));
+        $languages = [];
+        try {
+            $languages = $git->languageStats($repository['default_branch'], 6);
+        } catch (Throwable) {
+        }
+        $colors = RepositoryService::languageColors();
+
+        $licenseName = '';
+        $licenseUrl = '';
+        if (!empty($repository['license']) && \App\Services\LicenseService::exists($repository['license'])) {
+            $info = \App\Services\LicenseService::available()[$repository['license']];
+            $licenseName = $info['name'];
+            $licenseUrl = $info['url'];
+        }
+
+        return [
+            'starCount' => $starCount,
+            'watchCount' => $watchCount,
+            'forkCount' => $forkCount,
+            'isStarred' => $isStarred,
+            'isWatched' => $isWatched,
+            'languages' => $languages,
+            'languageColors' => $colors,
+            'licenseName' => $licenseName,
+            'licenseUrl' => $licenseUrl,
+        ];
+    }
+
+    public function toggleStar(string $owner, string $repo): void
+    {
+        Auth::requireUser();
+        $repository = $this->repository($owner, $repo);
+        RepositoryService::toggleStar((int) $repository['id'], (int) Auth::id());
+        $this->back();
+    }
+
+    public function toggleWatch(string $owner, string $repo): void
+    {
+        Auth::requireUser();
+        $repository = $this->repository($owner, $repo);
+        RepositoryService::toggleWatch((int) $repository['id'], (int) Auth::id());
+        $this->back();
+    }
+
+    private function back(): void
+    {
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer) {
+            header('Location: ' . $referer);
+            exit;
+        }
+        redirect('/');
     }
 
     public function show(string $owner, string $repo): void
@@ -81,10 +158,11 @@ final class RepositoryController
                     break;
                 }
             }
-        } catch (InvalidArgumentException) {
+        } catch (InvalidArgumentException | \RuntimeException) {
             abort(404);
         }
         $this->attachCounts($repository);
+        $sidebar = self::sidebarData($repository);
         View::render('repositories/show', [
             'title' => $repository['username'] . '/' . $repository['name'],
             'repository' => $repository,
@@ -96,6 +174,8 @@ final class RepositoryController
             'entries' => $entries,
             'latest' => $latest,
             'readme' => $readme,
+            'sidebar' => $sidebar,
+            'tags' => $git->tags(),
         ]);
     }
 
@@ -159,7 +239,7 @@ final class RepositoryController
         View::render('repositories/commits', [
             'title' => t('Commit history') . ' · ' . $repository['name'],
             'repository' => $repository,
-            'activeTab' => 'code',
+            'activeTab' => 'history',
             'branch' => $branch,
             'branches' => $git->branches(),
             'commits' => $commits,
@@ -211,15 +291,20 @@ final class RepositoryController
         $name = trim((string) ($_POST['name'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
         $visibility = ($_POST['visibility'] ?? '') === 'private' ? 'private' : 'public';
+        $homepage = trim((string) ($_POST['homepage'] ?? ''));
         $defaultBranch = (string) ($_POST['default_branch'] ?? $repository['default_branch']);
         $git = $this->git($repository);
         if (!in_array($defaultBranch, $git->branches(), true)) {
             flash('error', t('The selected default branch does not exist.'));
             redirect(repo_url($repository, 'settings'));
         }
+        if ($homepage !== '' && !preg_match('#^https?://[^\s<>"\']+$#i', $homepage)) {
+            flash('error', t('Homepage must be a valid http:// or https:// URL.'));
+            redirect(repo_url($repository, 'settings'));
+        }
 
         try {
-            $updated = RepositoryService::update((int) $repository['id'], $name, $description, $visibility);
+            $updated = RepositoryService::update((int) $repository['id'], $name, $description, $visibility, $homepage);
             $result = $git->run(['symbolic-ref', 'HEAD', 'refs/heads/' . $defaultBranch]);
             if (!$result['success']) {
                 throw new \RuntimeException('Unable to update default branch.');
@@ -247,6 +332,84 @@ final class RepositoryController
         }
         flash('success', t('Repository and all associated records deleted.'));
         redirect('/dashboard');
+    }
+
+    public function archive(string $owner, string $repo): void
+    {
+        $repository = $this->repository($owner, $repo);
+        $ref = (string) ($_GET['ref'] ?? $repository['default_branch']);
+        $git = $this->git($repository);
+        $tmpDir = dirname(__DIR__, 2) . '/storage/tmp';
+        if (!is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0775, true);
+        }
+        $tmp = $tmpDir . '/arch_' . uniqid('', true) . '.zip';
+        if (!$git->archive($ref, $tmp)) {
+            @unlink($tmp);
+            abort(404);
+        }
+        $filename = $repository['name'] . '-' . preg_replace('/[^A-Za-z0-9._-]/', '-', $ref) . '.zip';
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . (string) filesize($tmp));
+        readfile($tmp);
+        @unlink($tmp);
+        exit;
+    }
+
+    public function newFile(string $owner, string $repo): void
+    {
+        $repository = $this->repository($owner, $repo, true);
+        $git = $this->git($repository);
+        $branch = (string) ($_REQUEST['ref'] ?? $repository['default_branch']);
+        $path = trim((string) ($_REQUEST['path'] ?? ''), '/');
+        if (!in_array($branch, $git->branches(), true)) {
+            abort(404);
+        }
+        $error = null;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $filePath = trim((string) ($_POST['file_path'] ?? ''));
+            $content = (string) ($_POST['content'] ?? '');
+            $message = trim((string) ($_POST['message'] ?? ''));
+
+            if (!empty($_FILES['upload']['tmp_name']) && is_uploaded_file($_FILES['upload']['tmp_name'])) {
+                if ((int) $_FILES['upload']['size'] > 2 * 1024 * 1024) {
+                    $error = t('File is too large (max 2 MiB).');
+                } else {
+                    $content = (string) file_get_contents($_FILES['upload']['tmp_name']);
+                    if ($filePath === '') {
+                        $filePath = basename((string) $_FILES['upload']['name']);
+                    }
+                }
+            }
+            if ($filePath === '') {
+                $error = $error ?? t('Please provide a file name.');
+            }
+
+            $fullPath = ($path !== '' ? $path . '/' : '') . $filePath;
+            if ($error === null) {
+                try {
+                    $user = Auth::user();
+                    $git->createFile($branch, $fullPath, $content, $message, (string) $user['username'], (string) ($user['email'] ?? 'wikicode@localhost'));
+                    flash('success', t('File committed.'));
+                    $dir = dirname($fullPath);
+                    redirect(repo_url($repository, '?' . http_build_query(['ref' => $branch, 'path' => $dir === '.' ? '' : $dir])));
+                } catch (Throwable $e) {
+                    error_log('createFile failed: ' . $e->getMessage());
+                    $error = t('Unable to commit the file. It may already exist with identical content.');
+                }
+            }
+        }
+        $this->attachCounts($repository);
+        View::render('repositories/new_file', [
+            'title' => t('Add file'),
+            'repository' => $repository,
+            'activeTab' => 'code',
+            'branch' => $branch,
+            'path' => $path,
+            'error' => $error,
+            'sidebar' => self::sidebarData($repository),
+        ]);
     }
 
     private function repository(string $owner, string $repo, bool $write = false): array
