@@ -7,12 +7,12 @@
     <a class="btn btn-primary" href="/new">+ <?= t('New repository') ?></a>
 </section>
 
-<section class="metric-grid">
-    <article><span>REPOSITORIES</span><strong><?= str_pad((string) $stats['repositories'], 2, '0', STR_PAD_LEFT) ?></strong><small><?= t('Owned archives') ?></small></article>
-    <article><span>OPEN ISSUES</span><strong><?= str_pad((string) $stats['issues'], 2, '0', STR_PAD_LEFT) ?></strong><small><?= t('Awaiting discussion') ?></small></article>
-    <article><span>PULL REQUESTS</span><strong><?= str_pad((string) $stats['pulls'], 2, '0', STR_PAD_LEFT) ?></strong><small><?= t('Awaiting review') ?></small></article>
-    <article class="metric-status"><span>SYSTEM STATUS</span><strong><i class="status-dot"></i> ONLINE</strong><small>GIT SERVICES AVAILABLE</small></article>
-</section>
+<nav class="dashboard-meta-nav">
+    <div class="meta-item"><span>REPOSITORIES</span><strong><?= str_pad((string) $stats['repositories'], 2, '0', STR_PAD_LEFT) ?></strong></div>
+    <div class="meta-item"><span>OPEN ISSUES</span><strong><?= str_pad((string) $stats['issues'], 2, '0', STR_PAD_LEFT) ?></strong></div>
+    <div class="meta-item"><span>PULL REQUESTS</span><strong><?= str_pad((string) $stats['pulls'], 2, '0', STR_PAD_LEFT) ?></strong></div>
+    <div class="meta-item meta-status"><span>SYSTEM</span><strong><i class="status-dot"></i> ONLINE</strong></div>
+</nav>
 
 <section class="section-block">
     <div class="section-heading">

@@ -352,6 +352,8 @@ return [
     'Tags' => '标签',
     'No tags' => '暂无标签',
     'Add file' => '新建文件',
+    'Upload file' => '上传文件',
+    'Create new file' => '新建文件',
     'Clone' => '克隆',
     'Download ZIP' => '下载 ZIP',
     'File name' => '文件名',

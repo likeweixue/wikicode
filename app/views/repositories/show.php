@@ -33,7 +33,13 @@ if ($path !== '') { $refQuery['path'] = $path; }
                     </div>
                 </details>
                 <?php if (\App\Core\Auth::canWrite($repository)): ?>
-                    <a class="tool-btn" href="<?= e(repo_url($repository, 'new-file?' . http_build_query($refQuery))) ?>"><span class="tool-ico">＋</span> <?= t('Add file') ?></a>
+                    <details class="dropdown">
+                        <summary class="tool-btn"><span class="tool-ico">＋</span> <?= t('Add file') ?> <span class="caret">▾</span></summary>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="<?= e(repo_url($repository, 'new-file?' . http_build_query($refQuery))) ?>">⬆ <?= t('Upload file') ?></a>
+                            <a class="dropdown-item" href="<?= e(repo_url($repository, 'new-file?' . http_build_query($refQuery))) ?>">＋ <?= t('Create new file') ?></a>
+                        </div>
+                    </details>
                 <?php endif; ?>
             </div>
             <div class="toolbar-right">
