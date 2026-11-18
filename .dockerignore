@@ -1,0 +1,8 @@
+.git
+.env
+.trae
+storage/repositories/*
+storage/tmp/*
+storage/locks/*
+*.log
+.DS_Store

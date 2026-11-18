@@ -1,0 +1,24 @@
+# 环境与密钥
+.env
+
+# 运行时数据（保留占位文件）
+storage/repositories/*
+!storage/repositories/.gitkeep
+storage/locks/*
+!storage/locks/.gitkeep
+storage/tmp/*
+!storage/tmp/.gitkeep
+
+# IDE / 编辑器
+.trae/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

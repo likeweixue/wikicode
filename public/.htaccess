@@ -1,0 +1,9 @@
+Options -Indexes -MultiViews
+RewriteEngine On
+
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteRule ^[^/]+/[^/]+\.git(?:/.*)?$ git.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L,QSA]
