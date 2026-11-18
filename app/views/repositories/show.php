@@ -88,7 +88,7 @@ if ($path !== '') { $refQuery['path'] = $path; }
         </section>
         <?php endif; ?>
         <section class="file-browser">
-            <header class="file-browser-header"><strong><?= $latest ? e($latest['subject']) : t('No commits yet') ?></strong><span><?= $latest ? e(short_sha($latest['sha'])) . ' · ' . e(format_date($latest['author_date'])) : '' ?></span></header>
+            <header class="file-browser-header"><strong><?= $latest ? e($latest['subject']) : t('No commits yet') ?></strong><span class="file-browser-meta"><a href="<?= e(repo_url($repository, 'commits?' . http_build_query(['ref' => $branch]))) ?>"><?= (int) ($commitCount ?? 0) ?> <?= t('commits') ?></a><?= $latest ? ' · ' . e(short_sha($latest['sha'])) . ' · ' . e(format_date($latest['author_date'])) : '' ?></span></header>
             <?php if ($path !== ''): ?><?php $parent = dirname($path); ?><a class="file-row" href="<?= e(repo_url($repository, '?' . http_build_query(['ref' => $branch, 'path' => $parent === '.' ? '' : $parent]))) ?>"><span class="file-type">DIR</span><span class="file-name">..</span><span class="file-commit"></span><span class="file-date"></span></a><?php endif; ?>
             <?php foreach ($entries as $entry): ?>
                 <?php $isDirectory = $entry['type'] === 'tree'; $target = $isDirectory ? repo_url($repository, '?' . http_build_query(['ref' => $branch, 'path' => $entry['path']])) : repo_url($repository, 'blob?' . http_build_query(['ref' => $branch, 'path' => $entry['path']])); ?>

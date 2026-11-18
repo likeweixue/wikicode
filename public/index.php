@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminCommunityController;
+use App\Controllers\AdminNavigationController;
 use App\Controllers\DashboardController;
 use App\Controllers\ForumController;
 use App\Controllers\HomeController;
@@ -53,6 +54,10 @@ try {
     Router::post('/admin/community/boards', [AdminCommunityController::class, 'storeBoard']);
     Router::post('/admin/community/boards/{id}', [AdminCommunityController::class, 'updateBoard']);
     Router::post('/admin/community/boards/{id}/delete', [AdminCommunityController::class, 'deleteBoard']);
+    Router::get('/admin/navigation', [AdminNavigationController::class, 'index']);
+    Router::post('/admin/navigation/items', [AdminNavigationController::class, 'store']);
+    Router::post('/admin/navigation/items/{id}', [AdminNavigationController::class, 'update']);
+    Router::post('/admin/navigation/items/{id}/delete', [AdminNavigationController::class, 'delete']);
     Router::get('/new', [RepositoryController::class, 'create']);
     Router::post('/new', [RepositoryController::class, 'store']);
 
@@ -76,6 +81,8 @@ try {
     Router::get('/{owner}/{repo}/archive', [RepositoryController::class, 'archive']);
     Router::get('/{owner}/{repo}/new-file', [RepositoryController::class, 'newFile']);
     Router::post('/{owner}/{repo}/new-file', [RepositoryController::class, 'newFile']);
+    Router::get('/{owner}/{repo}/edit', [RepositoryController::class, 'edit']);
+    Router::post('/{owner}/{repo}/edit', [RepositoryController::class, 'edit']);
     Router::get('/{owner}/{repo}/commit/{sha}', [RepositoryController::class, 'commit']);
     Router::get('/{owner}/{repo}/settings', [RepositoryController::class, 'settings']);
     Router::post('/{owner}/{repo}/settings', [RepositoryController::class, 'update']);

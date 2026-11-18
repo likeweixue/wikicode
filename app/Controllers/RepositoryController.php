@@ -179,6 +179,7 @@ final class RepositoryController
             'readme' => $readme,
             'sidebar' => $sidebar,
             'tags' => $git->tags(),
+            'commitCount' => $git->countCommits($branch),
             'search' => $search,
             'searchResults' => $searchResults,
         ]);
@@ -428,6 +429,49 @@ final class RepositoryController
             'error' => $error,
             'licenseTemplates' => $licenseTemplates,
             'sidebar' => self::sidebarData($repository),
+        ]);
+    }
+
+    public function edit(string $owner, string $repo): void
+    {
+        $repository = $this->repository($owner, $repo, true);
+        $git = $this->git($repository);
+        $branch = (string) ($_REQUEST['ref'] ?? $repository['default_branch']);
+        $path = trim((string) ($_REQUEST['path'] ?? ''), '/');
+        if ($path === '' || !in_array($branch, $git->branches(), true)) {
+            abort(404);
+        }
+        try {
+            $file = $git->file($branch, $path);
+        } catch (Throwable) {
+            abort(404);
+        }
+        if (!$file) {
+            abort(404);
+        }
+        $error = null;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $content = (string) ($_POST['content'] ?? '');
+            $message = trim((string) ($_POST['message'] ?? ''));
+            try {
+                $user = Auth::user();
+                $git->updateFile($branch, $path, $content, $message, (string) $user['username'], (string) ($user['email'] ?? 'wikicode@localhost'));
+                flash('success', t('File updated.'));
+                redirect(repo_url($repository, 'blob?' . http_build_query(['ref' => $branch, 'path' => $path])));
+            } catch (Throwable $exception) {
+                error_log('updateFile failed: ' . $exception->getMessage());
+                $error = t('Unable to commit the changes. The file may already contain this content.');
+            }
+        }
+        $this->attachCounts($repository);
+        View::render('repositories/edit_file', [
+            'title' => t('Edit') . ' ' . basename($path),
+            'repository' => $repository,
+            'activeTab' => 'code',
+            'branch' => $branch,
+            'path' => $path,
+            'file' => $file,
+            'error' => $error,
         ]);
     }
 

@@ -452,4 +452,38 @@ return [
     'Please choose a category and provide a board name.' => '请选择分区并填写板块名称。',
     'Deleting a category also removes its boards and topics.' => '删除分区会同时删除其下的板块与主题。',
     'Deleting a board also removes its topics.' => '删除板块会同时删除其下的主题。',
+
+    // — 文件编辑 —
+    'Edit' => '编辑',
+    'Edit file' => '编辑文件',
+    'Commit changes' => '提交更改',
+    'File updated.' => '文件已更新。',
+    'Unable to commit the changes. The file may already contain this content.' => '提交失败，文件内容可能没有变化。',
+
+    // — 发行版 —
+    'Releases' => '发行版',
+    'No releases published' => '没有发行任何版本',
+    'Latest' => '最新',
+
+    // — 菜单设置 —
+    'Navigation' => '菜单',
+    'Navigation settings' => '菜单设置',
+    'Add, hide, reorder or remove the links shown in the top menu.' => '添加、隐藏、排序或删除顶部菜单中的链接。',
+    'Top menu' => '顶部菜单',
+    'Visible' => '显示',
+    'Show' => '显示',
+    'Access' => '访问权限',
+    'Everyone' => '所有人',
+    'Signed in' => '已登录用户',
+    'Admin only' => '仅管理员',
+    'Menu label' => '菜单名称',
+    'Add menu item' => '添加菜单项',
+    'Menu item created.' => '菜单项已创建。',
+    'Menu item updated.' => '菜单项已更新。',
+    'Menu item deleted.' => '菜单项已删除。',
+    'Please provide a label and a valid URL.' => '请填写名称和有效的链接地址。',
+    'Please provide a valid URL.' => '请填写有效的链接地址。',
+    'Please provide a menu label.' => '请填写菜单名称。',
+    'Built-in menu items can be hidden but not deleted.' => '内置菜单可以隐藏，但不能删除。',
+    'Delete this menu item?' => '确定删除这个菜单项吗？',
 ];

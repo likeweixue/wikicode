@@ -24,15 +24,11 @@
             <span></span><span></span><span></span><span class="sr-only"><?= t('Toggle navigation') ?></span>
         </button>
         <nav class="main-nav" id="main-nav" data-nav>
-            <a href="/"><?= t('Explore') ?></a>
-            <a href="/community" class="<?= active_class(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/community' || str_starts_with((string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/community/')) ?>"><?= t('Community') ?></a>
-            <?php if ($currentUser): ?>
-                <a href="/dashboard"><?= t('Dashboard') ?></a>
-                <a href="/new"><?= t('New repository') ?></a>
-                <?php if ($currentUser['role'] === 'admin'): ?>
-                    <a href="/admin"><?= t('Administration') ?></a>
-                <?php endif; ?>
-            <?php endif; ?>
+            <?php $navPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH); ?>
+            <?php foreach (\App\Services\NavigationService::items() as $navItem): ?>
+                <?php $navUrl = rtrim((string) $navItem['url'], '/'); $isActive = $navUrl === '' ? $navPath === '/' : ($navPath === $navUrl || str_starts_with($navPath, $navUrl . '/')); ?>
+                <a href="<?= e($navItem['url']) ?>" class="<?= active_class($isActive) ?>"><?= e(\App\Services\NavigationService::label($navItem)) ?></a>
+            <?php endforeach; ?>
         </nav>
         <div class="header-tools">
             <form method="post" action="/locale" class="compact-form">

@@ -605,6 +605,44 @@ final class GitService
     }
 
     /**
+     * 修改已有文件并提交。
+     */
+    public function updateFile(string $branch, string $path, string $content, string $message, string $authorName, string $authorEmail): void
+    {
+        $path = trim($path, '/');
+        if ($path === '' || str_contains($path, '..') || str_contains($path, "\0") || str_starts_with($path, '/')) {
+            throw new InvalidArgumentException('Invalid file path.');
+        }
+        if (!$this->run(['cat-file', '-e', $branch . ':' . $path])['success']) {
+            throw new InvalidArgumentException('File not found.');
+        }
+        if ($message === '') {
+            $message = 'Update ' . $path;
+        }
+
+        $tmpBase = dirname(__DIR__, 2) . '/storage/tmp';
+        if (!is_dir($tmpBase)) {
+            @mkdir($tmpBase, 0775, true);
+        }
+        $tmp = $tmpBase . '/wt_' . uniqid('', true);
+
+        $this->requireSuccess($this->run(['worktree', 'add', '--force', $tmp, $branch]), 'Unable to create worktree');
+        try {
+            $full = $tmp . '/' . $path;
+            if (file_put_contents($full, $content) === false) {
+                throw new RuntimeException('Unable to write file content.');
+            }
+            $this->requireSuccess($this->run(['add', '--', $path], $tmp), 'git add failed');
+            $this->requireSuccess(
+                $this->run(['-c', 'user.name=' . $authorName, '-c', 'user.email=' . $authorEmail, 'commit', '-m', $message], $tmp),
+                'git commit failed'
+            );
+        } finally {
+            $this->run(['worktree', 'remove', '--force', $tmp]);
+        }
+    }
+
+    /**
      * 贡献者统计：返回 [author_email => ['name' => author_name, 'commits' => int]]。
      *
      * @return array<string, array{name: string, commits: int}>

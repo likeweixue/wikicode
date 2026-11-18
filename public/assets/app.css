@@ -726,3 +726,41 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
     .forum-topic-row { grid-template-columns: minmax(0, 1fr) 50px; }
     .topic-last { display: none; }
 }
+
+/* ——————————————— v0.5 细节 ——————————————— */
+/* 工具栏控件统一高度 */
+.tool-btn,
+.repo-search input { height: 38px; min-height: 38px; }
+.tool-btn { padding: 0 13px; }
+.repo-search input { padding-top: 0; padding-bottom: 0; }
+
+/* 侧边栏与工具栏橙色按钮对齐 */
+.repo-sidebar { padding-top: 14px; }
+
+/* 文件查看页：编辑入口与源码编辑器 */
+.code-panel-actions { display: inline-flex; align-items: center; gap: 14px; }
+.code-edit-link { color: var(--accent); font-weight: 600; }
+.code-edit-link:hover { text-decoration: underline; }
+.edit-file-panel { max-width: none; }
+.code-editor { min-height: 420px; font: 12px/1.6 var(--mono); white-space: pre; tab-size: 4; }
+
+/* 发行版面板 */
+.release-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.release-list li a { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.release-tag { font-family: var(--mono); color: var(--ink); }
+.release-list li a:hover .release-tag { color: var(--accent); }
+.release-link { font: 9px var(--mono); color: var(--muted); }
+.sidebar-empty { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* 文件浏览器头部的提交次数 */
+.file-browser-meta { font: 10px var(--mono); color: var(--muted); }
+.file-browser-meta a { color: var(--accent); }
+.file-browser-meta a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+    .repo-sidebar { padding-top: 0; }
+}
+
+.check-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.check-inline input[type="checkbox"] { width: auto; min-height: 0; }
+.nav-access .badge { font-size: 9px; }

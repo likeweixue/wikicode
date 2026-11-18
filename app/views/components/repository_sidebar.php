@@ -43,6 +43,20 @@ $totalForks = $sc['forkCount'] ?? 0;
 </div>
 <?php endif; ?>
 
+<?php $sidebarTags = $tags ?? []; ?>
+<div class="sidebar-section">
+    <div class="sidebar-title"><?= t('Releases') ?></div>
+    <?php if (!$sidebarTags): ?>
+        <p class="sidebar-empty"><?= t('No releases published') ?></p>
+    <?php else: ?>
+        <ul class="release-list">
+            <?php foreach (array_slice($sidebarTags, 0, 4) as $sidebarTag): ?>
+                <li><a href="<?= e(repo_url($repository, '?' . http_build_query(['ref' => $sidebarTag]))) ?>"><span class="release-tag">🏷 <?= e($sidebarTag) ?></span><span class="release-link"><?= t('Latest') ?> ↗</span></a></li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+</div>
+
 <?php if (!empty($sc['languages'])): ?>
 <div class="sidebar-section">
     <div class="sidebar-title"><?= t('Languages') ?></div>
