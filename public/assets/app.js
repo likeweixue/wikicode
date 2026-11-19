@@ -65,6 +65,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 项目文档 Tab 切换（README / LICENSE / SECURITY …）
+    const docShell = document.querySelector('[data-doc-shell]');
+    if (docShell) {
+        const tabs = Array.from(docShell.querySelectorAll('[data-doc-tab]'));
+        const bodies = Array.from(docShell.querySelectorAll('[data-doc-body]'));
+        const tocs = Array.from(docShell.querySelectorAll('[data-doc-toc]'));
+        const titleEl = docShell.querySelector('[data-doc-title]');
+        const activate = (key, path) => {
+            tabs.forEach(t => {
+                const active = t.dataset.docTab === key;
+                t.classList.toggle('is-active', active);
+                t.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            bodies.forEach(b => {
+                const active = b.dataset.docBody === key;
+                b.classList.toggle('is-active', active);
+                b.hidden = !active;
+            });
+            tocs.forEach(t => {
+                const active = t.dataset.docToc === key;
+                t.classList.toggle('is-active', active);
+                t.hidden = !active;
+            });
+            if (titleEl && path) {
+                titleEl.textContent = path + ' / PROJECT DOCUMENT';
+            }
+            // 记录选中的 doc，下次刷新仍停留在那个 tab
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('doc', key);
+                window.history.replaceState(null, '', url.toString());
+            } catch (_) {}
+            // 滚动到文档面板顶部（如果当前视口已经在 markdown 里）
+            if (window.scrollY > 400) {
+                const top = docShell.getBoundingClientRect().top + window.scrollY - 40;
+                window.scrollTo({ top, behavior: 'smooth' });
+            }
+        };
+        tabs.forEach(t => {
+            t.addEventListener('click', () => activate(t.dataset.docTab, t.dataset.docPath));
+        });
+    }
+
     // 新建文件页：许可证模板搜索与插入
     const licenseHelper = document.querySelector('[data-license-helper]');
     const licenseData = document.getElementById('license-data');

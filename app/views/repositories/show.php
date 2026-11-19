@@ -102,32 +102,56 @@ if ($path !== '') { $refQuery['path'] = $path; }
             <?php endforeach; ?>
             <?php if (!$entries && $path === ''): ?><div class="empty-state"><p><?= t('This repository has no files.') ?></p></div><?php endif; ?>
         </section>
-        <?php if ($readme !== null): ?>
-        <?php $toc = markdown_toc($readme); $projectDocs = $projectDocs ?? []; ?>
-        <section class="readme-panel readme-shell" data-readme-shell>
+        <?php if ($readme !== null || !empty($projectDocs)): ?>
+        <?php
+        $projectDocs = $projectDocs ?? [];
+        // 组装 tabs：README 总是第一个（如果存在）
+        $tabs = [];
+        if ($readme !== null) {
+            $tabs[] = ['key' => 'readme', 'label' => 'README', 'path' => 'README.md', 'content' => $readme, 'html' => render_markdown($readme), 'toc' => markdown_toc($readme)];
+        }
+        foreach ($projectDocs as $d) {
+            $tabs[] = ['key' => 'doc-' . md5($d['path']), 'label' => $d['label'], 'path' => $d['path'], 'content' => $d['content'], 'html' => $d['html'], 'toc' => $d['toc']];
+        }
+        $activeKey = $_GET['doc'] ?? ($tabs[0]['key'] ?? 'readme');
+        ?>
+        <section class="readme-panel readme-shell" data-readme-shell data-doc-shell>
             <div class="readme-title">
-                <span>README.md / PROJECT DOCUMENT</span>
+                <span data-doc-title><?= e($tabs[0]['path'] ?? 'README.md') ?> / PROJECT DOCUMENT</span>
                 <div class="readme-title-actions">
-                    <?php foreach ($projectDocs as $doc): ?>
-                        <a class="readme-doc-link" href="<?= e(repo_url($repository, 'blob?' . http_build_query(['ref' => $branch, 'path' => $doc['path']]))) ?>" title="<?= e($doc['path']) ?>"><?= e($doc['label']) ?></a>
+                    <?php foreach ($tabs as $tab): ?>
+                        <?php $isActive = $tab['key'] === $activeKey; ?>
+                        <button type="button" class="readme-doc-link<?= $isActive ? ' is-active' : '' ?>" data-doc-tab="<?= e($tab['key']) ?>" data-doc-path="<?= e($tab['path']) ?>" aria-pressed="<?= $isActive ? 'true' : 'false' ?>"><?= e($tab['label']) ?></button>
                     <?php endforeach; ?>
                     <button type="button" class="toc-toggle" data-toc-toggle aria-expanded="true">☰ <?= t('Contents') ?></button>
                 </div>
             </div>
             <div class="readme-inner">
-                <aside class="readme-toc" data-readme-toc>
-                    <div class="toc-head"><span><?= t('On this page') ?></span></div>
-                    <?php if ($toc): ?>
-                        <nav class="toc-nav">
-                            <?php foreach ($toc as $item): ?>
-                                <a class="toc-link toc-level-<?= (int) $item['level'] ?>" href="#<?= e($item['id']) ?>"><?= e($item['text']) ?></a>
-                            <?php endforeach; ?>
-                        </nav>
-                    <?php else: ?>
-                        <p class="toc-empty"><?= t('No headings found.') ?></p>
-                    <?php endif; ?>
-                </aside>
-                <div class="readme-content markdown-body"><?= render_markdown($readme) ?></div>
+                <?php foreach ($tabs as $tab): ?>
+                    <?php $isActive = $tab['key'] === $activeKey; ?>
+                    <aside class="readme-toc<?= $isActive ? ' is-active' : '' ?>" data-doc-toc="<?= e($tab['key']) ?>"<?= $isActive ? '' : ' hidden' ?>>
+                        <div class="toc-head"><span><?= t('On this page') ?></span></div>
+                        <?php if (!empty($tab['toc'])): ?>
+                            <nav class="toc-nav">
+                                <?php foreach ($tab['toc'] as $item): ?>
+                                    <a class="toc-link toc-level-<?= (int) $item['level'] ?>" href="#<?= e($item['id']) ?>"><?= e($item['text']) ?></a>
+                                <?php endforeach; ?>
+                            </nav>
+                        <?php else: ?>
+                            <p class="toc-empty"><?= t('No headings found.') ?></p>
+                        <?php endif; ?>
+                    </aside>
+                <?php endforeach; ?>
+                <?php foreach ($tabs as $tab): ?>
+                    <?php $isActive = $tab['key'] === $activeKey; ?>
+                    <div class="readme-doc-body<?= $isActive ? ' is-active' : '' ?>" data-doc-body="<?= e($tab['key']) ?>"<?= $isActive ? '' : ' hidden' ?>>
+                        <?php if ($tab['html'] !== null): ?>
+                            <div class="readme-content markdown-body"><?= $tab['html'] ?></div>
+                        <?php else: ?>
+                            <div class="readme-content markdown-body"><p class="muted"><?= t('Unable to render this file.') ?></p></div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </section>
         <?php endif; ?>

@@ -646,6 +646,7 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
 .readme-title-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .readme-doc-link { padding: 4px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 10px var(--mono); letter-spacing: .5px; text-decoration: none; text-transform: uppercase; transition: border-color .12s, background .12s, color .12s; }
 .readme-doc-link:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); text-decoration: none; }
+.readme-doc-link.is-active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); font-weight: 700; }
 
 /* ——————————————— 许可证模板 ——————————————— */
 .license-helper { padding: 12px 14px; border: 1px dashed var(--line); background: var(--soft-2); }

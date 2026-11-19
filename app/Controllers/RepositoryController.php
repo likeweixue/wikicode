@@ -201,9 +201,25 @@ final class RepositoryController
                     // README 面板已经存在，不再重复一个 README 链接
                     continue;
                 }
-                $projectDocs[] = ['label' => $label, 'path' => $docPath];
+                // 读取并渲染文档内容（项目文档一般都很小，放心读）
+                $docContent = null;
+                $docToc = [];
+                try {
+                    $docFile = $git->file($branch, $docPath);
+                    if (!empty($docFile['content']) && !str_contains($docFile['content'], "\0")) {
+                        $docContent = $docFile['content'];
+                        $docToc = markdown_toc($docContent);
+                    }
+                } catch (\Throwable) {
+                }
+                $projectDocs[] = [
+                    'label' => $label,
+                    'path' => $docPath,
+                    'content' => $docContent,
+                    'html' => $docContent !== null ? render_markdown($docContent) : null,
+                    'toc' => $docToc,
+                ];
             }
-            error_log("DEBUG projectDocs=" . json_encode($projectDocs, JSON_UNESCAPED_UNICODE));
         } catch (InvalidArgumentException | \RuntimeException) {
             abort(404);
         }
