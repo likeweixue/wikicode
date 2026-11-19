@@ -161,6 +161,49 @@ final class RepositoryController
                     break;
                 }
             }
+            // 扫描仓库根目录的项目文档（CONTRIBUTING / SECURITY / LICENSE / CHANGELOG …）
+            $projectDocs = [];
+            $rootEntries = $path === '' ? $entries : $git->tree($branch, '');
+            $docMap = [
+                'readme.md' => 'README',
+                'contributing.md' => 'CONTRIBUTING',
+                'contribution.md' => 'CONTRIBUTING',
+                'security.md' => 'SECURITY',
+                'code_of_conduct.md' => 'CODE OF CONDUCT',
+                'license' => 'LICENSE',
+                'license.md' => 'LICENSE',
+                'copying' => 'LICENSE',
+                'support.md' => 'SUPPORT',
+                'changelog.md' => 'CHANGELOG',
+                'changes.md' => 'CHANGELOG',
+                'history.md' => 'CHANGELOG',
+                'authors.md' => 'AUTHORS',
+                'maintainers.md' => 'MAINTAINERS',
+                'funding.yml' => 'FUNDING',
+                'funding.yaml' => 'FUNDING',
+                'codecov.yml' => null,
+                '.github/workflows' => null,
+            ];
+            $labelToFile = [];
+            foreach ($rootEntries as $entry) {
+                if (($entry['type'] ?? '') !== 'blob') continue;
+                $lower = strtolower($entry['name']);
+                if (!isset($docMap[$lower])) continue;
+                $label = $docMap[$lower];
+                if ($label === null) continue;
+                // 同一 label 只保留第一次出现
+                if (!isset($labelToFile[$label])) {
+                    $labelToFile[$label] = $entry['path'];
+                }
+            }
+            foreach ($labelToFile as $label => $docPath) {
+                if ($label === 'README' && $readme !== null) {
+                    // README 面板已经存在，不再重复一个 README 链接
+                    continue;
+                }
+                $projectDocs[] = ['label' => $label, 'path' => $docPath];
+            }
+            error_log("DEBUG projectDocs=" . json_encode($projectDocs, JSON_UNESCAPED_UNICODE));
         } catch (InvalidArgumentException | \RuntimeException) {
             abort(404);
         }
@@ -195,6 +238,7 @@ final class RepositoryController
             'entries' => $entries,
             'latest' => $latest,
             'readme' => $readme,
+            'projectDocs' => $projectDocs,
             'sidebar' => $sidebar,
             'tags' => $git->tags(),
             'commitCount' => $git->countCommits($branch),

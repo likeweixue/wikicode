@@ -643,6 +643,9 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
 .readme-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .toc-toggle { padding: 4px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 10px var(--mono); letter-spacing: .5px; cursor: pointer; }
 .toc-toggle:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.readme-title-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.readme-doc-link { padding: 4px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 10px var(--mono); letter-spacing: .5px; text-decoration: none; text-transform: uppercase; transition: border-color .12s, background .12s, color .12s; }
+.readme-doc-link:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); text-decoration: none; }
 
 /* ——————————————— 许可证模板 ——————————————— */
 .license-helper { padding: 12px 14px; border: 1px dashed var(--line); background: var(--soft-2); }

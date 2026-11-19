@@ -103,11 +103,16 @@ if ($path !== '') { $refQuery['path'] = $path; }
             <?php if (!$entries && $path === ''): ?><div class="empty-state"><p><?= t('This repository has no files.') ?></p></div><?php endif; ?>
         </section>
         <?php if ($readme !== null): ?>
-        <?php $toc = markdown_toc($readme); ?>
+        <?php $toc = markdown_toc($readme); $projectDocs = $projectDocs ?? []; ?>
         <section class="readme-panel readme-shell" data-readme-shell>
             <div class="readme-title">
                 <span>README.md / PROJECT DOCUMENT</span>
-                <button type="button" class="toc-toggle" data-toc-toggle aria-expanded="true">☰ <?= t('Contents') ?></button>
+                <div class="readme-title-actions">
+                    <?php foreach ($projectDocs as $doc): ?>
+                        <a class="readme-doc-link" href="<?= e(repo_url($repository, 'blob?' . http_build_query(['ref' => $branch, 'path' => $doc['path']]))) ?>" title="<?= e($doc['path']) ?>"><?= e($doc['label']) ?></a>
+                    <?php endforeach; ?>
+                    <button type="button" class="toc-toggle" data-toc-toggle aria-expanded="true">☰ <?= t('Contents') ?></button>
+                </div>
             </div>
             <div class="readme-inner">
                 <aside class="readme-toc" data-readme-toc>
