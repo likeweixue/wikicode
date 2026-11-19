@@ -21,16 +21,34 @@ final class CategoryService
      */
     public static function builtins(): array
     {
+        // icon 字段存 Icons 的 key（与 slug 一致），由 Icons::svg() 渲染为统一线性 SVG
         return [
-            'cms'         => ['name' => '建站CMS',   'icon' => '🏗', 'position' => 1],
-            'forum'       => ['name' => '建站论坛',  'icon' => '💬', 'position' => 2],
-            'image-host'  => ['name' => '图床程序',  'icon' => '🖼', 'position' => 3],
-            'cloud-disk'  => ['name' => '网盘程序',  'icon' => '☁️', 'position' => 4],
-            'download'    => ['name' => '下载工具',  'icon' => '⬇️', 'position' => 5],
-            'blog'        => ['name' => '博客程序',  'icon' => '📝', 'position' => 6],
-            'nav'         => ['name' => '导航程序',  'icon' => '🧭', 'position' => 7],
-            'other'       => ['name' => '其他',      'icon' => '📦', 'position' => 99],
+            'frontend'     => ['name' => '前端',       'icon' => 'frontend',     'position' => 1],
+            'backend'      => ['name' => '后端',       'icon' => 'backend',      'position' => 2],
+            'ai'           => ['name' => 'AI',         'icon' => 'ai',           'position' => 3],
+            'web'          => ['name' => 'Web',        'icon' => 'web',          'position' => 4],
+            'mobile'       => ['name' => '手机开发',   'icon' => 'mobile',       'position' => 5],
+            'cms'          => ['name' => '建站CMS',    'icon' => 'cms',          'position' => 6],
+            'forum'        => ['name' => '建站论坛',   'icon' => 'forum',        'position' => 7],
+            'blog'         => ['name' => '博客程序',   'icon' => 'blog',         'position' => 8],
+            'image-host'   => ['name' => '图床程序',   'icon' => 'image-host',   'position' => 9],
+            'cloud-disk'   => ['name' => '网盘程序',   'icon' => 'cloud-disk',   'position' => 10],
+            'download'     => ['name' => '下载工具',   'icon' => 'download',     'position' => 11],
+            'nav'          => ['name' => '导航程序',   'icon' => 'nav',          'position' => 12],
+            'game'         => ['name' => '游戏',       'icon' => 'game',         'position' => 13],
+            'entertainment'=> ['name' => '娱乐',       'icon' => 'entertainment','position' => 14],
+            'plugin'       => ['name' => '插件',       'icon' => 'plugin',       'position' => 15],
+            'industrial'   => ['name' => '工业软件',   'icon' => 'industrial',   'position' => 16],
+            'other'        => ['name' => '其他',       'icon' => 'other',        'position' => 99],
         ];
+    }
+
+    /**
+     * 渲染分类图标为统一线性 SVG。空 key 回退到通用图标。
+     */
+    public static function iconSvg(string $key, int $size = 16): string
+    {
+        return \App\Core\Icons::svg($key !== '' ? $key : 'other', $size);
     }
 
     /**

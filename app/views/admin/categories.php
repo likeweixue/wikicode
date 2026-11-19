@@ -1,3 +1,4 @@
+<?php $iconKeys = array_keys(\App\Core\Icons::all()); ?>
 <div class="admin-layout">
     <?php require __DIR__ . '/_nav.php'; ?>
     <div>
@@ -27,7 +28,7 @@
                     <?php foreach ($categories as $category): ?>
                         <?php $fid = 'cat-' . (int) $category['id']; $isBuiltin = !empty($category['is_builtin']); ?>
                         <tr>
-                            <td><input form="<?= $fid ?>" name="icon" value="<?= e((string) $category['icon']) ?>" maxlength="8" style="width:48px;text-align:center"></td>
+                            <td><span class="icon-preview"><?= \App\Services\CategoryService::iconSvg((string) $category['icon']) ?></span><select form="<?= $fid ?>" name="icon"><?php foreach ($iconKeys as $k): ?><option value="<?= e($k) ?>" <?= ((string) $category['icon']) === $k ? 'selected' : '' ?>><?= e($k) ?></option><?php endforeach; ?></select></td>
                             <td><input form="<?= $fid ?>" name="name" value="<?= e((string) $category['name']) ?>" required></td>
                             <td><input form="<?= $fid ?>" name="description" value="<?= e((string) $category['description']) ?>"></td>
                             <td><input form="<?= $fid ?>" type="number" name="position" value="<?= (int) $category['position'] ?>" style="width:70px"></td>
@@ -43,7 +44,7 @@
             </div>
             <form class="inline-create" method="post" action="/admin/categories">
                 <?= csrf_field() ?>
-                <input name="icon" placeholder="<?= e(t('Icon')) ?>" maxlength="8" style="width:56px">
+                <select name="icon"><?php foreach ($iconKeys as $k): ?><option value="<?= e($k) ?>" <?= $k === 'other' ? 'selected' : '' ?>><?= e($k) ?></option><?php endforeach; ?></select>
                 <input name="name" placeholder="<?= e(t('New category name')) ?>" required>
                 <input name="description" placeholder="<?= e(t('Description')) ?>">
                 <input type="number" name="position" placeholder="<?= e(t('Position')) ?>" value="0" style="width:70px">

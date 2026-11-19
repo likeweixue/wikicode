@@ -895,7 +895,9 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
     border-left-color: var(--accent);
     font-weight: 700;
 }
-.category-icon { font-size: 14px; width: 18px; text-align: center; }
+.category-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; flex: 0 0 18px; }
+.category-icon svg { display: block; }
+.icon-preview { display: inline-flex; align-items: center; vertical-align: middle; margin-right: 6px; color: var(--muted); }
 .category-name { flex: 1; font-size: 13px; }
 .category-count { font: 600 10px/1 var(--mono); color: var(--muted); background: var(--soft-1); padding: 3px 6px; border-radius: 9px; min-width: 20px; text-align: center; }
 .category-link.is-active .category-count { background: var(--accent); color: #fff; }

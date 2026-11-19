@@ -15,14 +15,14 @@ $activeSlug = $currentCategorySlug ?? '';
         <div class="explore-panel-head"><span><?= t('Categories') ?></span></div>
         <nav class="category-nav" aria-label="<?= e(t('Categories')) ?>">
             <a class="category-link <?= $activeSlug === '' ? 'is-active' : '' ?>" href="/explore">
-                <span class="category-icon">⊕</span>
+                <span class="category-icon"><?= \App\Core\Icons::svg('all') ?></span>
                 <span class="category-name"><?= t('All') ?></span>
                 <span class="category-count"><?= (int) ($totalPublic ?? count($repositories)) ?></span>
             </a>
             <?php foreach ($categories as $cat): ?>
                 <?php $isActive = $activeSlug === ($cat['slug'] ?? ''); ?>
                 <a class="category-link <?= $isActive ? 'is-active' : '' ?>" href="/explore?category=<?= e(rawurlencode((string) $cat['slug'])) ?>">
-                    <span class="category-icon"><?= e((string) ($cat['icon'] ?? '')) ?></span>
+                    <span class="category-icon"><?= \App\Services\CategoryService::iconSvg((string) ($cat['icon'] ?? '')) ?></span>
                     <span class="category-name"><?= e((string) $cat['name']) ?></span>
                     <span class="category-count"><?= (int) ($cat['repo_count'] ?? 0) ?></span>
                 </a>
