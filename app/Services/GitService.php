@@ -526,6 +526,74 @@ final class GitService
     }
 
     /**
+     * 在指定分支上创建轻量标签。
+     */
+    public function createTag(string $tag, string $branch): void
+    {
+        $tag = trim($tag);
+        if ($tag === '' || mb_strlen($tag, 'UTF-8') > 100) {
+            throw new InvalidArgumentException('Tag name must be 1–100 characters.');
+        }
+        $check = $this->run(['check-ref-format', 'refs/tags/' . $tag]);
+        if (!$check['success']) {
+            throw new InvalidArgumentException('Invalid tag name.');
+        }
+        if (in_array($tag, $this->tags(), true)) {
+            throw new InvalidArgumentException('Tag already exists.');
+        }
+        if ($this->resolveBranch($branch) === null) {
+            throw new InvalidArgumentException('Unknown branch.');
+        }
+        $this->requireSuccess($this->run(['tag', $tag, $branch]), 'Unable to create tag');
+    }
+
+    /**
+     * 每个路径最近一次提交（提交说明 / 时间），用于文件列表展示。
+     * 返回 path => ['sha' => ..., 'date' => ..., 'subject' => ...]。
+     *
+     * @return array<string, array{sha: string, date: string, subject: string}>
+     */
+    public function latestCommitByPath(string $branch, int $limit = 300): array
+    {
+        $commit = $this->resolveBranch($branch);
+        if ($commit === null) {
+            return [];
+        }
+        $result = $this->run([
+            '-c', 'core.quotepath=false',
+            'log',
+            '-n', (string) max(1, $limit),
+            '--format=%x1e%H%x1f%aI%x1f%s',
+            '--name-only',
+            $commit,
+        ]);
+        if (!$result['success']) {
+            return [];
+        }
+
+        $map = [];
+        foreach (explode("\x1e", $result['stdout']) as $record) {
+            $record = trim($record, "\r\n");
+            if ($record === '') {
+                continue;
+            }
+            $lines = preg_split('/\r?\n/', $record) ?: [];
+            $meta = explode("\x1f", (string) array_shift($lines));
+            if (count($meta) < 3) {
+                continue;
+            }
+            foreach ($lines as $path) {
+                $path = trim($path);
+                if ($path === '' || isset($map[$path])) {
+                    continue;
+                }
+                $map[$path] = ['sha' => $meta[0], 'date' => $meta[1], 'subject' => $meta[2]];
+            }
+        }
+        return $map;
+    }
+
+    /**
      * 按路径关键字搜索仓库中的文件。
      *
      * @return string[]

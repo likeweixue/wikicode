@@ -9,6 +9,7 @@ use App\Core\Database;
 use App\Core\View;
 use App\Services\GitService;
 use App\Services\LicenseService;
+use App\Services\ReleaseService;
 use App\Services\RepositoryService;
 use InvalidArgumentException;
 use Throwable;
@@ -109,6 +110,7 @@ final class RepositoryController
             'languageColors' => $colors,
             'licenseName' => $licenseName,
             'licenseUrl' => $licenseUrl,
+            'releases' => ReleaseService::summaries((int) $repository['id'], 4),
         ];
     }
 
@@ -166,6 +168,22 @@ final class RepositoryController
         $sidebar = self::sidebarData($repository);
         $search = trim((string) ($_GET['q'] ?? ''));
         $searchResults = $search !== '' ? $git->searchFiles($branch, $search, 50) : [];
+        $fileCommits = $git->latestCommitByPath($branch);
+        $entryCommits = [];
+        foreach ($entries as $entry) {
+            if ($entry['type'] === 'blob') {
+                $entryCommits[$entry['path']] = $fileCommits[$entry['path']] ?? null;
+                continue;
+            }
+            $latestForDirectory = null;
+            foreach ($fileCommits as $filePath => $info) {
+                if (str_starts_with($filePath, $entry['path'] . '/')
+                    && ($latestForDirectory === null || strcmp((string) $info['date'], (string) $latestForDirectory['date']) > 0)) {
+                    $latestForDirectory = $info;
+                }
+            }
+            $entryCommits[$entry['path']] = $latestForDirectory;
+        }
         View::render('repositories/show', [
             'title' => $repository['username'] . '/' . $repository['name'],
             'repository' => $repository,
@@ -180,6 +198,7 @@ final class RepositoryController
             'sidebar' => $sidebar,
             'tags' => $git->tags(),
             'commitCount' => $git->countCommits($branch),
+            'entryCommits' => $entryCommits,
             'search' => $search,
             'searchResults' => $searchResults,
         ]);

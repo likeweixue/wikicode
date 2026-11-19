@@ -12,6 +12,7 @@ use App\Controllers\HomeController;
 use App\Controllers\InsightsController;
 use App\Controllers\IssueController;
 use App\Controllers\PullRequestController;
+use App\Controllers\ReleaseController;
 use App\Controllers\RepositoryController;
 use App\Controllers\WikiController;
 use App\Core\Router;
@@ -83,6 +84,16 @@ try {
     Router::post('/{owner}/{repo}/new-file', [RepositoryController::class, 'newFile']);
     Router::get('/{owner}/{repo}/edit', [RepositoryController::class, 'edit']);
     Router::post('/{owner}/{repo}/edit', [RepositoryController::class, 'edit']);
+    // Releases & tags
+    Router::get('/{owner}/{repo}/releases', [ReleaseController::class, 'index']);
+    Router::get('/{owner}/{repo}/releases/new', [ReleaseController::class, 'create']);
+    Router::post('/{owner}/{repo}/releases', [ReleaseController::class, 'store']);
+    Router::get('/{owner}/{repo}/releases/{release}/assets/{asset}', [ReleaseController::class, 'download']);
+    Router::get('/{owner}/{repo}/releases/{release}', [ReleaseController::class, 'show']);
+    Router::post('/{owner}/{repo}/releases/{release}/assets', [ReleaseController::class, 'uploadAsset']);
+    Router::get('/{owner}/{repo}/tags', [ReleaseController::class, 'tags']);
+    Router::post('/{owner}/{repo}/tags', [ReleaseController::class, 'storeTag']);
+
     Router::get('/{owner}/{repo}/commit/{sha}', [RepositoryController::class, 'commit']);
     Router::get('/{owner}/{repo}/settings', [RepositoryController::class, 'settings']);
     Router::post('/{owner}/{repo}/settings', [RepositoryController::class, 'update']);

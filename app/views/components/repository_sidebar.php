@@ -43,18 +43,20 @@ $totalForks = $sc['forkCount'] ?? 0;
 </div>
 <?php endif; ?>
 
-<?php $sidebarTags = $tags ?? []; ?>
+<?php $sidebarReleases = $sc['releases'] ?? []; ?>
 <div class="sidebar-section">
-    <div class="sidebar-title"><?= t('Releases') ?></div>
-    <?php if (!$sidebarTags): ?>
-        <p class="sidebar-empty"><?= t('No releases published') ?></p>
+    <div class="sidebar-title"><a href="<?= e(repo_url($repository, 'releases')) ?>"><?= t('Releases') ?></a></div>
+    <?php if (!$sidebarReleases): ?>
+        <a class="sidebar-empty release-empty-link" href="<?= e(repo_url($repository, 'releases')) ?>"><?= t('No releases published') ?> ↗</a>
     <?php else: ?>
         <ul class="release-list">
-            <?php foreach (array_slice($sidebarTags, 0, 4) as $sidebarTag): ?>
-                <li><a href="<?= e(repo_url($repository, '?' . http_build_query(['ref' => $sidebarTag]))) ?>"><span class="release-tag">🏷 <?= e($sidebarTag) ?></span><span class="release-link"><?= t('Latest') ?> ↗</span></a></li>
+            <?php foreach ($sidebarReleases as $index => $sidebarRelease): ?>
+                <li><a href="<?= e(repo_url($repository, 'releases/' . $sidebarRelease['id'])) ?>"><span class="release-tag">🏷 <?= e($sidebarRelease['tag']) ?></span><span class="release-link"><?= $index === 0 ? t('Latest') : '' ?> ↗</span></a></li>
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+    <?php if ($sidebarReleases): ?><a class="sidebar-more" href="<?= e(repo_url($repository, 'releases')) ?>"><?= t('View all releases') ?> ↗</a><?php endif; ?>
+    <?php if (\App\Core\Auth::canWrite($repository)): ?><a class="sidebar-more" href="<?= e(repo_url($repository, 'releases/new')) ?>">＋ <?= t('New release') ?></a><?php endif; ?>
 </div>
 
 <?php if (!empty($sc['languages'])): ?>

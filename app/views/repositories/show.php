@@ -30,6 +30,11 @@ if ($path !== '') { $refQuery['path'] = $path; }
                         <?php foreach ($tags as $tag): ?>
                             <a class="dropdown-item" href="<?= e(repo_url($repository, '?' . http_build_query(['ref' => $tag]))) ?>"><?= e($tag) ?></a>
                         <?php endforeach; ?>
+                        <div class="dropdown-foot">
+                            <a class="dropdown-item" href="<?= e(repo_url($repository, 'tags')) ?>"><?= t('View all tags') ?> ↗</a>
+                            <a class="dropdown-item" href="<?= e(repo_url($repository, 'releases')) ?>"><?= t('Releases') ?> ↗</a>
+                            <?php if (\App\Core\Auth::canWrite($repository)): ?><a class="dropdown-item" href="<?= e(repo_url($repository, 'releases/new')) ?>">＋ <?= t('New release') ?></a><?php endif; ?>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -92,7 +97,8 @@ if ($path !== '') { $refQuery['path'] = $path; }
             <?php if ($path !== ''): ?><?php $parent = dirname($path); ?><a class="file-row" href="<?= e(repo_url($repository, '?' . http_build_query(['ref' => $branch, 'path' => $parent === '.' ? '' : $parent]))) ?>"><span class="file-type">DIR</span><span class="file-name">..</span><span class="file-commit"></span><span class="file-date"></span></a><?php endif; ?>
             <?php foreach ($entries as $entry): ?>
                 <?php $isDirectory = $entry['type'] === 'tree'; $target = $isDirectory ? repo_url($repository, '?' . http_build_query(['ref' => $branch, 'path' => $entry['path']])) : repo_url($repository, 'blob?' . http_build_query(['ref' => $branch, 'path' => $entry['path']])); ?>
-                <a class="file-row" href="<?= e($target) ?>"><span class="file-type"><?= $isDirectory ? 'DIR' : 'FILE' ?></span><span class="file-name"><?= e($entry['name']) ?></span><span class="file-commit"><?= $isDirectory ? t('Directory') : ($entry['size'] !== null ? number_format($entry['size']) . ' B' : '') ?></span><span class="file-date"><?= e(short_sha($entry['sha'])) ?></span></a>
+                <?php $commitInfo = $entryCommits[$entry['path']] ?? null; ?>
+                <a class="file-row" href="<?= e($target) ?>"><span class="file-type"><?= $isDirectory ? 'DIR' : 'FILE' ?></span><span class="file-name"><?= e($entry['name']) ?></span><span class="file-commit" title="<?= e((string) ($commitInfo['subject'] ?? '')) ?>"><?= $commitInfo ? e((string) $commitInfo['subject']) : '' ?></span><span class="file-date" title="<?= e((string) ($commitInfo['sha'] ?? '')) ?>"><?= $commitInfo ? e(format_date((string) $commitInfo['date'])) : '' ?></span></a>
             <?php endforeach; ?>
             <?php if (!$entries && $path === ''): ?><div class="empty-state"><p><?= t('This repository has no files.') ?></p></div><?php endif; ?>
         </section>

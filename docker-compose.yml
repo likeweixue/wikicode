@@ -38,8 +38,10 @@ services:
     volumes:
       - repository-data:/var/www/html/storage/repositories
       - repository-locks:/var/www/html/storage/locks
+      - release-data:/var/www/html/storage/releases
 
 volumes:
   mysql-data:
   repository-data:
   repository-locks:
+  release-data:
