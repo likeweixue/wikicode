@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bodies = Array.from(docShell.querySelectorAll('[data-doc-body]'));
         const tocs = Array.from(docShell.querySelectorAll('[data-doc-toc]'));
         const titleEl = docShell.querySelector('[data-doc-title]');
+        const editBtn = docShell.querySelector('[data-doc-edit]');
         const activate = (key, path) => {
             tabs.forEach(t => {
                 const active = t.dataset.docTab === key;
@@ -90,6 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (titleEl && path) {
                 titleEl.textContent = path + ' / PROJECT DOCUMENT';
+            }
+            if (editBtn && path) {
+                const base = editBtn.dataset.editBase || '';
+                editBtn.setAttribute('href', base + encodeURIComponent(path));
+                editBtn.dataset.docEdit = path;
+                editBtn.setAttribute('title', 'Edit: ' + path);
             }
             // 记录选中的 doc，下次刷新仍停留在那个 tab
             try {

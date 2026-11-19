@@ -114,11 +114,21 @@ if ($path !== '') { $refQuery['path'] = $path; }
             $tabs[] = ['key' => 'doc-' . md5($d['path']), 'label' => $d['label'], 'path' => $d['path'], 'content' => $d['content'], 'html' => $d['html'], 'toc' => $d['toc']];
         }
         $activeKey = $_GET['doc'] ?? ($tabs[0]['key'] ?? 'readme');
+        // 找当前激活 tab 的 path，用于"编辑"按钮
+        $activeTabPath = 'README.md';
+        foreach ($tabs as $tab) {
+            if ($tab['key'] === $activeKey) { $activeTabPath = $tab['path']; break; }
+        }
+        $editBase = repo_url($repository, 'edit?' . http_build_query(['ref' => $branch]));
+        $canWriteDoc = \App\Core\Auth::canWrite($repository);
         ?>
         <section class="readme-panel readme-shell" data-readme-shell data-doc-shell>
             <div class="readme-title">
                 <span data-doc-title><?= e($tabs[0]['path'] ?? 'README.md') ?> / PROJECT DOCUMENT</span>
                 <div class="readme-title-actions">
+                    <?php if ($canWriteDoc): ?>
+                        <a class="readme-doc-edit" href="<?= e($editBase . '&path=' . urlencode($activeTabPath)) ?>" data-doc-edit="<?= e($activeTabPath) ?>" data-edit-base="<?= e($editBase . '&path=') ?>" title="<?= t('Edit') . ': ' . $activeTabPath ?>">✎ <?= t('Edit') ?></a>
+                    <?php endif; ?>
                     <?php foreach ($tabs as $tab): ?>
                         <?php $isActive = $tab['key'] === $activeKey; ?>
                         <button type="button" class="readme-doc-link<?= $isActive ? ' is-active' : '' ?>" data-doc-tab="<?= e($tab['key']) ?>" data-doc-path="<?= e($tab['path']) ?>" aria-pressed="<?= $isActive ? 'true' : 'false' ?>"><?= e($tab['label']) ?></button>
