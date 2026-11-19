@@ -6,6 +6,8 @@ use App\Core\Auth;
 use App\Core\I18n;
 use App\Core\View;
 
+define('WIKICODE_VERSION', '0.6.1');
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {

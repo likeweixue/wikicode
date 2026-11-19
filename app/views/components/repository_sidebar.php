@@ -37,8 +37,8 @@ $totalForks = $sc['forkCount'] ?? 0;
 <div class="sidebar-section">
     <div class="sidebar-title"><?= t('License') ?></div>
     <div class="sidebar-badge-wrap">
-        <span class="license-badge"><?= e($sc['licenseName']) ?></span>
-        <?php if (!empty($sc['licenseUrl'])): ?><a class="sidebar-link small" href="<?= e($sc['licenseUrl']) ?>" target="_blank" rel="noopener noreferrer">↗</a><?php endif; ?>
+        <button type="button" class="license-badge license-badge-trigger" data-doc-trigger="LICENSE" title="<?= t('Jump to LICENSE document') ?>"><?= e($sc['licenseName']) ?></button>
+        <?php if (!empty($sc['licenseUrl'])): ?><a class="sidebar-link small" href="<?= e($sc['licenseUrl']) ?>" target="_blank" rel="noopener noreferrer" title="<?= t('Visit license on opensource.org') ?>">↗</a><?php endif; ?>
     </div>
 </div>
 <?php endif; ?>

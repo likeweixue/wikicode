@@ -80,7 +80,7 @@
         </div>
         <div class="footer-meta">
             <span>BUILD TOGETHER. SHIP TOGETHER.</span>
-            <span>© <?= date('Y') ?> WIKICODE / LOCAL INSTANCE</span>
+            <span><?= e(setting('site_name', 'wikicode')) ?> v<?= WIKICODE_VERSION ?> · <?= date('Y') ?></span>
         </div>
     </div>
 </footer>

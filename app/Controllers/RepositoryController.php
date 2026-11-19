@@ -225,6 +225,15 @@ final class RepositoryController
         }
         $this->attachCounts($repository);
         $sidebar = self::sidebarData($repository);
+        // 若数据库没选 license 但仓库里有 LICENSE 文件 → 补上侧边栏徽章
+        if (empty($sidebar['licenseName'])) {
+            foreach ($projectDocs as $d) {
+                if (($d['label'] ?? '') === 'LICENSE') {
+                    $sidebar['licenseName'] = 'LICENSE';
+                    break;
+                }
+            }
+        }
         $search = trim((string) ($_GET['q'] ?? ''));
         $searchResults = $search !== '' ? $git->searchFiles($branch, $search, 50) : [];
         $fileCommits = $git->latestCommitByPath($branch);

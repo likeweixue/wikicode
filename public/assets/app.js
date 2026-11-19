@@ -115,6 +115,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 侧边栏"许可证"徽章 → 跳到 README 面板的 LICENSE tab
+    document.querySelectorAll('[data-doc-trigger]').forEach(trigger => {
+        trigger.addEventListener('click', () => {
+            const keyword = (trigger.dataset.docTrigger || '').toUpperCase();
+            const shell = document.querySelector('[data-doc-shell]');
+            if (!shell) {
+                // 不是仓库详情页，忽略
+                return;
+            }
+            const allTabs = Array.from(shell.querySelectorAll('[data-doc-tab]'));
+            // 先找 tab label 精确匹配（LICENSE / SECURITY / CHANGELOG …），再 fallback 到 path 匹配
+            const match = allTabs.find(t => (t.textContent || '').trim().toUpperCase() === keyword)
+                       || allTabs.find(t => (t.dataset.docPath || '').toUpperCase().includes(keyword));
+            if (!match) {
+                // 没有对应 tab — 直接滚动到 doc-shell 让用户看到"面板存在但缺文件"
+                shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
+            // 激活 tab + 滚动
+            match.click();
+            // click 之后已经会触发 activate() 里的滚动，这里再 double-check
+            setTimeout(() => shell.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
+        });
+    });
+
     // 新建文件页：许可证模板搜索与插入
     const licenseHelper = document.querySelector('[data-license-helper]');
     const licenseData = document.getElementById('license-data');

@@ -470,6 +470,8 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
 .stat-static { cursor: default; }
 .stat-label { font-size: 11px; color: var(--muted); letter-spacing: .3px; }
 .license-badge { display: inline-block; padding: 3px 10px; border: 1px solid var(--accent); color: var(--accent); font: 700 10px/1 var(--mono); letter-spacing: .5px; }
+.license-badge-trigger { cursor: pointer; background: var(--panel); transition: background .12s, color .12s, box-shadow .12s; }
+.license-badge-trigger:hover { background: var(--accent); color: #fff; box-shadow: inset 3px 0 0 color-mix(in srgb, #000 25%, var(--accent)); }
 .sidebar-meta { padding: 14px 20px; }
 .sidebar-meta p { font-size: 11px; color: var(--muted); margin: 6px 0; }
 .sidebar-meta b { color: var(--ink); font-weight: 600; }
