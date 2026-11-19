@@ -103,7 +103,7 @@ final class RepositoryService
         );
     }
 
-    public static function create(int $ownerId, string $name, string $description, string $visibility, string $homepage = '', string $license = ''): array
+    public static function create(int $ownerId, string $name, string $description, string $visibility, string $homepage = '', string $license = '', int $categoryId = 0): array
     {
         self::assertPositiveId($ownerId);
         self::assertValidRepositoryName($name);
@@ -116,6 +116,7 @@ final class RepositoryService
         if ($license !== '' && !LicenseService::exists($license)) {
             $license = '';
         }
+        $categoryId = \App\Services\CategoryService::normalizeId($categoryId);
 
         $owner = Database::fetch('SELECT id, username FROM users WHERE id = ? LIMIT 1', [$ownerId]);
         if ($owner === null) {
@@ -134,13 +135,14 @@ final class RepositoryService
                 $visibility,
                 $homepage,
                 $license,
+                $categoryId,
                 &$path,
                 &$cleanPathOnFailure
             ): int {
                 Database::execute(
-                    'INSERT INTO repositories (owner_id, name, description, visibility, homepage, license, default_branch) '
-                    . 'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [$ownerId, $name, $description, $visibility, $homepage, $license, 'main']
+                    'INSERT INTO repositories (owner_id, name, description, visibility, category_id, homepage, license, default_branch) '
+                    . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$ownerId, $name, $description, $visibility, $categoryId > 0 ? $categoryId : null, $homepage, $license, 'main']
                 );
 
                 $id = (int) $pdo->lastInsertId();
@@ -201,7 +203,7 @@ final class RepositoryService
         return $repository;
     }
 
-    public static function update(int $id, string $name, string $description, string $visibility, string $homepage = ''): array
+    public static function update(int $id, string $name, string $description, string $visibility, string $homepage = '', int $categoryId = 0): array
     {
         self::assertPositiveId($id);
         self::assertValidRepositoryName($name);
@@ -210,14 +212,15 @@ final class RepositoryService
         if ($homepage !== '') {
             self::assertValidHomepage($homepage);
         }
+        $categoryId = \App\Services\CategoryService::normalizeId($categoryId);
 
         if (self::findById($id) === null) {
             throw new RuntimeException('Repository does not exist: ' . $id);
         }
 
         Database::execute(
-            'UPDATE repositories SET name = ?, description = ?, visibility = ?, homepage = ? WHERE id = ?',
-            [$name, $description, $visibility, $homepage, $id]
+            'UPDATE repositories SET name = ?, description = ?, visibility = ?, category_id = ?, homepage = ? WHERE id = ?',
+            [$name, $description, $visibility, $categoryId > 0 ? $categoryId : null, $homepage, $id]
         );
 
         $repository = self::findById($id);
@@ -225,6 +228,77 @@ final class RepositoryService
             throw new RuntimeException('Repository could not be loaded after update: ' . $id);
         }
         return $repository;
+    }
+
+    /**
+     * 探索页：公开仓库（可选分类筛选），按创建时间倒序。
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function latestPublic(?int $categoryId, int $limit = 100): array
+    {
+        $sql = 'SELECT r.*, u.username,
+                (SELECT COUNT(*) FROM issues i WHERE i.repository_id = r.id AND i.status = \'open\') AS open_issues,
+                (SELECT COUNT(*) FROM stars s WHERE s.repository_id = r.id) AS star_count
+             FROM repositories r JOIN users u ON u.id = r.owner_id
+             WHERE r.visibility = \'public\'';
+        $params = [];
+        if ($categoryId !== null && $categoryId > 0) {
+            $sql .= ' AND r.category_id = ?';
+            $params[] = $categoryId;
+        }
+        $sql .= ' ORDER BY r.created_at DESC, r.id DESC LIMIT ' . (int) $limit;
+        return Database::fetchAll($sql, $params);
+    }
+
+    /**
+     * 右栏热门：按 Star 数倒序的公开仓库。
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function topStarred(int $limit = 10): array
+    {
+        return Database::fetchAll(
+            'SELECT r.*, u.username,
+                (SELECT COUNT(*) FROM stars s WHERE s.repository_id = r.id) AS star_count
+             FROM repositories r JOIN users u ON u.id = r.owner_id
+             WHERE r.visibility = \'public\'
+             ORDER BY star_count DESC, r.id DESC LIMIT ' . (int) $limit
+        );
+    }
+
+    /**
+     * 右栏推荐：按管理员指定的 ID 顺序取仓库（仅返回存在且公开的）。
+     *
+     * @param list<int> $ids
+     * @return list<array<string, mixed>>
+     */
+    public static function byIdsPublic(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($i) => $i > 0));
+        if ($ids === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $rows = Database::fetchAll(
+            "SELECT r.*, u.username,
+                (SELECT COUNT(*) FROM stars s WHERE s.repository_id = r.id) AS star_count
+             FROM repositories r JOIN users u ON u.id = r.owner_id
+             WHERE r.visibility = 'public' AND r.id IN ({$placeholders})",
+            $ids
+        );
+        // 按传入顺序重排
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[(int) $row['id']] = $row;
+        }
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($indexed[$id])) {
+                $ordered[] = $indexed[$id];
+            }
+        }
+        return $ordered;
     }
 
     public static function delete(int $id): void

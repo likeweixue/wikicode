@@ -30,7 +30,8 @@ final class RepositoryController
         $visibility = ($_POST['visibility'] ?? '') === 'private' ? 'private' : 'public';
         $homepage = trim((string) ($_POST['homepage'] ?? ''));
         $license = trim((string) ($_POST['license'] ?? ''));
-        $values = compact('name', 'description', 'visibility', 'homepage', 'license');
+        $categoryId = (int) ($_POST['category_id'] ?? 0);
+        $values = ['name' => $name, 'description' => $description, 'visibility' => $visibility, 'homepage' => $homepage, 'license' => $license, 'category_id' => $categoryId];
 
         if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,49}$/', $name) || str_ends_with(strtolower($name), '.git')) {
             View::render('repositories/create', [
@@ -58,7 +59,7 @@ final class RepositoryController
         }
 
         try {
-            $repository = RepositoryService::create((int) Auth::id(), $name, $description, $visibility, $homepage, $license);
+            $repository = RepositoryService::create((int) Auth::id(), $name, $description, $visibility, $homepage, $license, $categoryId);
         } catch (Throwable $exception) {
             error_log((string) $exception);
             View::render('repositories/create', [
@@ -386,6 +387,7 @@ final class RepositoryController
         $description = trim((string) ($_POST['description'] ?? ''));
         $visibility = ($_POST['visibility'] ?? '') === 'private' ? 'private' : 'public';
         $homepage = trim((string) ($_POST['homepage'] ?? ''));
+        $categoryId = (int) ($_POST['category_id'] ?? 0);
         $defaultBranch = (string) ($_POST['default_branch'] ?? $repository['default_branch']);
         $git = $this->git($repository);
         if (!in_array($defaultBranch, $git->branches(), true)) {
@@ -398,7 +400,7 @@ final class RepositoryController
         }
 
         try {
-            $updated = RepositoryService::update((int) $repository['id'], $name, $description, $visibility, $homepage);
+            $updated = RepositoryService::update((int) $repository['id'], $name, $description, $visibility, $homepage, $categoryId);
             $result = $git->run(['symbolic-ref', 'HEAD', 'refs/heads/' . $defaultBranch]);
             if (!$result['success']) {
                 throw new \RuntimeException('Unable to update default branch.');

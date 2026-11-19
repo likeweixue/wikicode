@@ -163,6 +163,9 @@ final class AdminController
                 'site_description' => (string) Setting::get('site_description', ''),
                 'default_language' => (string) Setting::get('default_language', 'zh-CN'),
                 'allow_registration' => (string) Setting::get('allow_registration', '1'),
+                'explore_hot_title' => (string) Setting::get('explore_hot_title', '热门'),
+                'explore_hot_mode' => (string) Setting::get('explore_hot_mode', 'stars'),
+                'explore_featured_repos' => (string) Setting::get('explore_featured_repos', ''),
             ],
         ]);
     }
@@ -188,6 +191,21 @@ final class AdminController
             Setting::set('site_description', $description);
             Setting::set('default_language', $language);
             Setting::set('allow_registration', $registration);
+
+            $hotTitle = trim((string) ($_POST['explore_hot_title'] ?? ''));
+            $hotMode = ($_POST['explore_hot_mode'] ?? 'stars') === 'featured' ? 'featured' : 'stars';
+            $featured = trim((string) ($_POST['explore_featured_repos'] ?? ''));
+            if ($hotTitle === '') {
+                $hotTitle = t('Hot');
+            }
+            // 校验 featured 为逗号分隔的正整数
+            if ($featured !== '' && !preg_match('/^\d+(,\d+)*$/', $featured)) {
+                $featured = '';
+            }
+            Setting::set('explore_hot_title', $hotTitle);
+            Setting::set('explore_hot_mode', $hotMode);
+            Setting::set('explore_featured_repos', $featured);
+
             flash('success', t('Site settings saved.'));
         }
         redirect('/admin/settings/site');

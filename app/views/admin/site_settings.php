@@ -23,5 +23,26 @@
                 <div class="form-actions"><button class="btn btn-primary" type="submit"><?= e(t('Save site settings')) ?> →</button></div>
             </form>
         </section>
+
+        <section class="settings-section tech-panel">
+            <h2><?= e(t('Explore sidebar')) ?></h2>
+            <p><?= e(t('Configure the right-hand panel on the Explore page.')) ?></p>
+            <form method="post" action="/admin/settings/site" class="stack-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="site_name" value="<?= e($values['site_name']) ?>">
+                <input type="hidden" name="default_language" value="<?= e($values['default_language']) ?>">
+                <input type="hidden" name="site_description" value="<?= e($values['site_description']) ?>">
+                <input type="hidden" name="allow_registration" value="<?= e($values['allow_registration']) ?>">
+                <div class="settings-grid">
+                    <label><span><?= e(t('Hot / featured panel title')) ?></span><input type="text" name="explore_hot_title" value="<?= e($values['explore_hot_title']) ?>" maxlength="50"></label>
+                    <label><span><?= e(t('Panel source')) ?></span><select name="explore_hot_mode">
+                        <option value="stars" <?= $values['explore_hot_mode'] === 'stars' ? 'selected' : '' ?>><?= e(t('Top starred (auto)')) ?></option>
+                        <option value="featured" <?= $values['explore_hot_mode'] === 'featured' ? 'selected' : '' ?>><?= e(t('Featured by admin')) ?></option>
+                    </select></label>
+                    <label class="full"><span><?= e(t('Featured repository IDs')) ?></span><input type="text" name="explore_featured_repos" value="<?= e($values['explore_featured_repos']) ?>" placeholder="<?= e(t('Comma-separated repository IDs, e.g. 1,3,7')) ?>"><small><?= e(t('Only used when panel source is "Featured by admin".')) ?></small></label>
+                </div>
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><?= e(t('Save site settings')) ?> →</button></div>
+            </form>
+        </section>
     </div>
 </div>

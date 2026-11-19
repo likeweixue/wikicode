@@ -11,6 +11,12 @@
                 <label class="full"><span><?= t('Description') ?></span><input type="text" name="description" maxlength="255" value="<?= e($repository['description']) ?>"></label>
                 <label class="full"><span><?= t('Project homepage') ?></span><input type="url" name="homepage" maxlength="255" value="<?= e($repository['homepage'] ?? '') ?>" placeholder="https://example.com"></label>
                 <label><span><?= t('Visibility') ?></span><select name="visibility"><option value="public" <?= $repository['visibility'] === 'public' ? 'selected' : '' ?>><?= t('Public') ?></option><option value="private" <?= $repository['visibility'] === 'private' ? 'selected' : '' ?>><?= t('Private') ?></option></select></label>
+                <label><span><?= t('Category') ?></span><select name="category_id">
+                    <option value="0"><?= t('Uncategorized') ?></option>
+                    <?php $settingsCategories = \App\Services\CategoryService::all(); foreach ($settingsCategories as $cat): ?>
+                        <option value="<?= (int) $cat['id'] ?>" <?= (int) ($repository['category_id'] ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= e((string) $cat['name']) ?></option>
+                    <?php endforeach; ?>
+                </select><small class="field-hint"><?= t('Used to group this repository in Explore.') ?></small></label>
             </div>
             <div class="form-actions"><button class="btn btn-primary" type="submit"><?= t('Save changes') ?> →</button></div>
         </form>

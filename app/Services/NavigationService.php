@@ -56,11 +56,12 @@ final class NavigationService
     private static function defaults(): array
     {
         return [
-            ['label' => '', 'label_key' => 'Explore', 'url' => '/', 'position' => 1, 'is_visible' => 1, 'requires_auth' => 0, 'requires_admin' => 0, 'is_core' => 1],
-            ['label' => '', 'label_key' => 'Community', 'url' => '/community', 'position' => 2, 'is_visible' => 1, 'requires_auth' => 0, 'requires_admin' => 0, 'is_core' => 1],
-            ['label' => '', 'label_key' => 'Dashboard', 'url' => '/dashboard', 'position' => 3, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 0, 'is_core' => 1],
-            ['label' => '', 'label_key' => 'New repository', 'url' => '/new', 'position' => 4, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 0, 'is_core' => 1],
-            ['label' => '', 'label_key' => 'Administration', 'url' => '/admin', 'position' => 5, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 1, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'Home', 'url' => '/', 'position' => 1, 'is_visible' => 1, 'requires_auth' => 0, 'requires_admin' => 0, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'Explore', 'url' => '/explore', 'position' => 2, 'is_visible' => 1, 'requires_auth' => 0, 'requires_admin' => 0, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'Community', 'url' => '/community', 'position' => 3, 'is_visible' => 1, 'requires_auth' => 0, 'requires_admin' => 0, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'Dashboard', 'url' => '/dashboard', 'position' => 4, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 0, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'New repository', 'url' => '/new', 'position' => 5, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 0, 'is_core' => 1],
+            ['label' => '', 'label_key' => 'Administration', 'url' => '/admin', 'position' => 6, 'is_visible' => 1, 'requires_auth' => 1, 'requires_admin' => 1, 'is_core' => 1],
         ];
     }
 }

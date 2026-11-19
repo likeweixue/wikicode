@@ -25,6 +25,14 @@
             </select>
                 <small class="field-hint"><?= t('An appropriate LICENSE file will be added to the first commit.') ?></small>
             </div>
+            <div class="field"><span><?= t('Category') ?></span><select name="category_id">
+                <option value=""><?= t('Uncategorized') ?></option>
+                <?php $createCategories = \App\Services\CategoryService::all(); foreach ($createCategories as $cat): ?>
+                    <option value="<?= (int) $cat['id'] ?>" <?= (int) ($values['category_id'] ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= e((string) $cat['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+                <small class="field-hint"><?= t('Optional. Used to group this repository in Explore.') ?></small>
+            </div>
             <div class="inline-notice"><?= t('A main branch and an initial README commit will be created automatically. You can clone, pull and push immediately.') ?></div>
             <div class="form-actions"><button class="btn btn-primary" type="submit"><?= t('Create repository') ?> →</button><a class="btn btn-ghost" href="/dashboard"><?= t('Cancel') ?></a></div>
         </form>
