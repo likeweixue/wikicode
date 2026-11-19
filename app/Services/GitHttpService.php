@@ -46,6 +46,7 @@ final class GitHttpService
 
         $write = $service === 'git-receive-pack';
         $user = null;
+        $token = null;
         if ($repository['visibility'] === 'private' || $write) {
             $user = $this->authenticate();
             if (!$user) {
@@ -53,10 +54,33 @@ final class GitHttpService
                 $this->fail(401, 'Authentication required.');
                 return;
             }
-            $allowed = $user['role'] === 'admin' || (int) $user['id'] === (int) $repository['owner_id'];
-            if (!$allowed) {
-                $this->fail(403, 'Repository permission denied.');
-                return;
+            // 区分：deploy token 返回的行里有 user_id / username / scope / token_hash；users 表返回的有 role / is_active
+            $isToken = isset($user['scope'], $user['token_hash']);
+            $ownerOk = (int) ($user['id'] ?? 0) === (int) $repository['owner_id'];
+            $adminOk = ($user['role'] ?? '') === 'admin';
+
+            if ($isToken) {
+                // Deploy token：读 scope 允许所有可见仓库；写 scope 仅 owner / admin 能 push
+                $token = $user;
+                if ($write && $token['scope'] !== 'write') {
+                    $this->fail(403, 'Deploy token is read-only.');
+                    return;
+                }
+                if ($write && !$ownerOk && !$adminOk) {
+                    $this->fail(403, 'Repository permission denied.');
+                    return;
+                }
+                if (!$ownerOk && !$adminOk && $repository['visibility'] === 'private') {
+                    $this->fail(403, 'Repository permission denied.');
+                    return;
+                }
+                // 规范化 user：让后续 proxy() 里 REMOTE_USER 用 username
+                $user = ['username' => $token['username'] ?? '', 'role' => '', 'id' => $token['user_id'] ?? 0];
+            } else {
+                if (!$ownerOk && !$adminOk) {
+                    $this->fail(403, 'Repository permission denied.');
+                    return;
+                }
             }
         }
 
@@ -90,11 +114,37 @@ final class GitHttpService
             return null;
         }
         [$login, $password] = explode(':', $decoded, 2);
+
+        // 1) Deploy token ：用户名 oauth2 / deploy / x-oauth-basic 时，密码部分就是明文 token
+        $lowerLogin = strtolower($login);
+        if (in_array($lowerLogin, ['oauth2', 'deploy', 'x-oauth-basic'], true)) {
+            $token = \App\Services\DeployTokenService::authenticate($password);
+            if ($token) {
+                \App\Services\DeployTokenService::markUsed((int) $token['id'], $this->clientIp());
+                return $token; // 返回数组，结构与 users 行一致（含 username / role / id 等）
+            }
+            return null;
+        }
+
+        // 2) 普通账号密码
         $user = Database::fetch(
             'SELECT * FROM users WHERE (username = ? OR email = ?) AND is_active = 1 LIMIT 1',
             [$login, $login]
         );
         return $user && password_verify($password, $user['password']) ? $user : null;
+    }
+
+    private function clientIp(): ?string
+    {
+        foreach (['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'] as $key) {
+            if (!empty($_SERVER[$key])) {
+                $ip = trim((string) (explode(',', (string) $_SERVER[$key])[0] ?? ''));
+                if ($ip !== '') {
+                    return $ip;
+                }
+            }
+        }
+        return null;
     }
 
     private function proxy(

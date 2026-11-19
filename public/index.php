@@ -7,6 +7,7 @@ use App\Controllers\AuthController;
 use App\Controllers\AdminCommunityController;
 use App\Controllers\AdminNavigationController;
 use App\Controllers\DashboardController;
+use App\Controllers\DeployTokenController;
 use App\Controllers\ForumController;
 use App\Controllers\HomeController;
 use App\Controllers\InsightsController;
@@ -14,6 +15,7 @@ use App\Controllers\IssueController;
 use App\Controllers\PullRequestController;
 use App\Controllers\ReleaseController;
 use App\Controllers\RepositoryController;
+use App\Services\GitHttpService;
 use App\Controllers\WikiController;
 use App\Core\Router;
 use App\Core\View;
@@ -59,6 +61,14 @@ try {
     Router::post('/admin/navigation/items', [AdminNavigationController::class, 'store']);
     Router::post('/admin/navigation/items/{id}', [AdminNavigationController::class, 'update']);
     Router::post('/admin/navigation/items/{id}/delete', [AdminNavigationController::class, 'delete']);
+
+    // Deploy tokens
+    Router::get('/admin/deploy-tokens', [DeployTokenController::class, 'index']);
+    Router::post('/admin/deploy-tokens', [DeployTokenController::class, 'store']);
+    Router::post('/admin/deploy-tokens/{id}/revoke', [DeployTokenController::class, 'revoke']);
+    Router::get('/user/deploy-tokens', [DeployTokenController::class, 'index']);
+    Router::post('/user/deploy-tokens', [DeployTokenController::class, 'store']);
+    Router::post('/user/deploy-tokens/{id}/revoke', [DeployTokenController::class, 'revoke']);
     Router::get('/new', [RepositoryController::class, 'create']);
     Router::post('/new', [RepositoryController::class, 'store']);
 
@@ -112,6 +122,13 @@ try {
 
     // Insights
     Router::get('/{owner}/{repo}/insights', [InsightsController::class, 'index']);
+
+    // Smart Git HTTP（仓库 clone / push）：在普通路由匹配之前拦截 .git 端点
+    $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    if (preg_match('#/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\.git(?:/.*)?$#', $rawPath)) {
+        (new GitHttpService())->handle();
+        exit;
+    }
 
     Router::get('/{owner}/{repo}', [RepositoryController::class, 'show']);
 

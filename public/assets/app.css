@@ -815,3 +815,31 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
 .file-picker:hover { background: color-mix(in srgb, var(--accent) 22%, #ffe9b8); border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .file-picker input[type="file"] { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .file-picker input[type="file"]:valid + span { color: var(--accent); }
+
+/* — Deploy tokens — */
+.token-created { margin-bottom: 22px; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.token-created .panel-topline b { color: var(--accent); }
+.token-copy-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+.token-copy { flex: 1; padding: 10px 12px; background: var(--bg); border: 1px dashed var(--accent); font: 13px var(--mono); color: var(--accent); overflow-wrap: anywhere; }
+.token-copy-row button { height: 40px; padding: 0 16px; background: var(--accent); color: #fff; border: 0; font-size: 12px; font-weight: 700; cursor: pointer; }
+.token-copy-row button:hover { background: color-mix(in srgb, var(--accent) 80%, #000); }
+.token-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 12px 0; font-size: 12px; }
+.token-meta dt { color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .4px; text-transform: uppercase; }
+.token-meta dd { margin: 0; color: var(--ink); font-weight: 500; }
+.token-url-help { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.token-url-help code { display: block; background: var(--bg); padding: 4px 10px; border: 1px solid var(--line); margin: 4px 0; font-size: 11px; overflow-wrap: anywhere; }
+
+.token-create-form { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto; gap: 16px; align-items: end; margin-bottom: 22px; }
+.token-create-form label span { display: block; font: 700 10px var(--mono); letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.token-create-form .token-create-actions { display: flex; align-items: end; }
+
+.token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.token-table th { text-align: left; padding: 10px 12px; font: 700 10px var(--mono); letter-spacing: .5px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.token-table td { padding: 12px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+.token-table tr:last-child td { border-bottom: 0; }
+.token-name { font-weight: 600; color: var(--ink); }
+.badge-write { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.badge-read { background: var(--soft-2); color: var(--muted); }
+.btn-danger { color: var(--danger); border-color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.muted { color: var(--muted); }
