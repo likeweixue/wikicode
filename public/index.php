@@ -117,6 +117,7 @@ try {
     Router::post('/{owner}/{repo}/delete', [RepositoryController::class, 'delete']);
     Router::post('/{owner}/{repo}/star', [RepositoryController::class, 'toggleStar']);
     Router::post('/{owner}/{repo}/watch', [RepositoryController::class, 'toggleWatch']);
+    Router::post('/{owner}/{repo}/fork', [RepositoryController::class, 'fork']);
 
     // Wiki
     Router::get('/{owner}/{repo}/wiki', [WikiController::class, 'index']);

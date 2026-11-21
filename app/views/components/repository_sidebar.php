@@ -15,19 +15,25 @@ $totalForks = $sc['forkCount'] ?? 0;
         <div class="stat-item">
             <form method="post" action="<?= e(repo_url($repository, 'star')) ?>" class="inline-form">
                 <?= csrf_field() ?>
-                <button class="stat-btn <?= $sc['isStarred'] ? 'is-active' : '' ?>" type="submit">★ <b><?= $totalStars ?></b></button>
+                <button class="stat-btn <?= $sc['isStarred'] ? 'is-active' : '' ?>" type="submit" title="<?= $sc['isStarred'] ? '取消星标' : '星标' ?>">
+                    <?= \App\Core\Icons::svg($sc['isStarred'] ? 'star-filled' : 'star') ?><b><?= $totalStars ?></b>
+                </button>
             </form>
             <span class="stat-label"><?= ngettext('Star', 'Stars', $totalStars) ?></span>
         </div>
         <div class="stat-item">
             <form method="post" action="<?= e(repo_url($repository, 'watch')) ?>" class="inline-form">
                 <?= csrf_field() ?>
-                <button class="stat-btn <?= $sc['isWatched'] ? 'is-active' : '' ?>" type="submit">👁 <b><?= $totalWatches ?></b></button>
+                <button class="stat-btn <?= $sc['isWatched'] ? 'is-active' : '' ?>" type="submit" title="<?= $sc['isWatched'] ? '取消关注' : '关注' ?>">
+                    <?= \App\Core\Icons::svg('eye') ?><b><?= $totalWatches ?></b>
+                </button>
             </form>
             <span class="stat-label"><?= ngettext('Watcher', 'Watchers', $totalWatches) ?></span>
         </div>
         <div class="stat-item">
-            <span class="stat-btn stat-static">⑂ <b><?= $totalForks ?></b></span>
+            <span class="stat-btn stat-static" title="复刻数">
+                <?= \App\Core\Icons::svg('fork') ?><b><?= $totalForks ?></b>
+            </span>
             <span class="stat-label"><?= ngettext('Fork', 'Forks', $totalForks) ?></span>
         </div>
     </div>

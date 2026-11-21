@@ -425,6 +425,98 @@ final class RepositoryService
 
     // ———————————————— Star / Watch / Fork 统计与操作 ————————————————
 
+    /**
+     * 仓库 header 操作按钮所需数据：star/watch/fork 计数 + 当前用户是否已 star/watch。
+     * 任何引用 repository_header.php 的页面都通过它拿数据。
+     */
+    public static function headerStats(int $repositoryId): array
+    {
+        $userId = \App\Core\Auth::id();
+        return [
+            'starCount'  => self::starCount($repositoryId),
+            'watchCount' => self::watchCount($repositoryId),
+            'forkCount'  => self::forkCount($repositoryId),
+            'isStarred'  => $userId ? self::isStarred($repositoryId, (int) $userId) : false,
+            'isWatched'  => $userId ? self::isWatched($repositoryId, (int) $userId) : false,
+        ];
+    }
+
+    /**
+     * Fork 一个仓库：在当前用户下创建新仓库（名字冲突自动加 -1/-2 后缀），
+     * 复制 bare git 仓库内容（branches/tags），并写入 forks 关联。
+     *
+     * @return array 新创建的仓库行
+     */
+    public static function fork(int $sourceRepositoryId, int $userId): array
+    {
+        $source = self::findById($sourceRepositoryId);
+        if (!$source) {
+            throw new InvalidArgumentException('Source repository not found.');
+        }
+        if ((int) $source['owner_id'] === $userId) {
+            throw new InvalidArgumentException('Cannot fork your own repository.');
+        }
+        // 仅公开仓库允许 fork（私有仓库需读权限，这里简化）
+        if ($source['visibility'] !== 'public') {
+            throw new InvalidArgumentException('Only public repositories can be forked.');
+        }
+
+        $user = Database::fetch('SELECT id, username FROM users WHERE id = ? LIMIT 1', [$userId]);
+        if (!$user) {
+            throw new InvalidArgumentException('User not found.');
+        }
+
+        // 生成不冲突的目标仓库名
+        $baseName = $source['name'];
+        $name = $baseName;
+        $i = 0;
+        while (self::find($user['username'], $name)) {
+            $i++;
+            $name = $baseName . '-' . $i;
+            if ($i > 50) {
+                throw new RuntimeException('Unable to allocate a unique fork name.');
+            }
+        }
+
+        // 创建空仓库（DB 行 + git init --bare），继承描述/可见性/许可证/分类
+        $new = self::create(
+            $userId,
+            $name,
+            (string) ($source['description'] ?? ''),
+            (string) $source['visibility'],
+            (string) ($source['homepage'] ?? ''),
+            (string) ($source['license'] ?? ''),
+            (int) ($source['category_id'] ?? 0)
+        );
+
+        // 复制 git 数据：用 git clone --bare 把源仓库的所有 refs 镜像到目标仓库
+        $sourcePath = self::path($sourceRepositoryId);
+        $targetPath = self::path((int) $new['id']);
+        try {
+            self::removeDirectory($targetPath);
+            $cmd = sprintf('git clone --bare %s %s 2>&1', escapeshellarg($sourcePath), escapeshellarg($targetPath));
+            exec($cmd, $out, $rc);
+            if ($rc !== 0) {
+                throw new RuntimeException('git clone --bare failed: ' . implode("\n", $out));
+            }
+            // 写入 forks 关联表
+            Database::execute(
+                'INSERT INTO forks (repository_id, fork_repository_id, user_id) VALUES (?, ?, ?)',
+                [$sourceRepositoryId, (int) $new['id'], $userId]
+            );
+        } catch (\Throwable $e) {
+            // 回滚：删除已创建的新仓库记录 + 目录
+            try {
+                Database::execute('DELETE FROM repositories WHERE id = ?', [(int) $new['id']]);
+                self::removeDirectory($targetPath);
+            } catch (\Throwable) {
+            }
+            throw $e;
+        }
+
+        return $new;
+    }
+
     public static function starCount(int $repositoryId): int
     {
         return (int) Database::fetch('SELECT COUNT(*) AS c FROM stars WHERE repository_id = ?', [$repositoryId])['c'];

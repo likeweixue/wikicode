@@ -131,6 +131,21 @@ final class RepositoryController
         $this->back();
     }
 
+    public function fork(string $owner, string $repo): void
+    {
+        Auth::requireUser();
+        $repository = $this->repository($owner, $repo);
+        try {
+            $new = RepositoryService::fork((int) $repository['id'], (int) Auth::id());
+        } catch (\InvalidArgumentException $e) {
+            $_SESSION['flash_error'] = $e->getMessage();
+            $this->back();
+            return;
+        }
+        $user = Auth::user();
+        redirect('/' . rawurlencode($user['username']) . '/' . rawurlencode($new['name']));
+    }
+
     private function back(): void
     {
         $referer = $_SERVER['HTTP_REFERER'] ?? null;
