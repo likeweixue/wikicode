@@ -316,6 +316,53 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
     .repository-heading { flex-direction: column; align-items: start; }
     .repo-actions { width: 100%; flex-wrap: wrap; }
 }
+
+/* Workflow / Actions */
+.workflow-empty { padding: 24px; text-align: center; color: var(--muted); }
+.workflow-empty p { margin: 6px 0; }
+.workflow-empty code { background: var(--soft); padding: 1px 5px; font: 11px var(--mono); }
+.workflow-hint { font-size: 12px; margin-top: 12px; }
+.workflow-example {
+    background: var(--ink); color: #d6d2c4;
+    padding: 12px 14px; margin: 10px auto 0; max-width: 480px;
+    font: 11px/1.5 var(--mono); text-align: left;
+    border: 1px solid var(--line);
+}
+.workflow-meta { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.workflow-meta .wm-label { color: var(--muted); font-size: 11px; font-family: var(--mono); letter-spacing: .4px; }
+.workflow-meta code { background: var(--soft); padding: 1px 5px; font: 11px var(--mono); margin-right: 4px; }
+.workflow-meta code.sha { color: var(--accent); }
+.workflow-trigger-form { padding: 0 16px 16px; display: flex; align-items: center; gap: 12px; }
+.workflow-trigger-hint { font-size: 11px; color: var(--muted); }
+.workflow-runs-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.workflow-runs-table th {
+    background: var(--soft); padding: 8px 10px; text-align: left;
+    font: 700 10px var(--mono); letter-spacing: .4px; color: var(--muted); border-bottom: 1px solid var(--line);
+}
+.workflow-runs-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.workflow-runs-table tr:hover td { background: var(--soft-2); }
+.workflow-runs-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.workflow-runs-table code { font: 11px var(--mono); }
+.workflow-runs-table code.sha { color: var(--accent); }
+.workflow-runs-table .muted { color: var(--muted); font-size: 11px; }
+.run-status {
+    display: inline-block; padding: 3px 8px;
+    font: 700 10px var(--mono); letter-spacing: .4px;
+    border: 1px solid var(--line); border-radius: 0;
+}
+.run-status-success { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
+.run-status-failure { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.run-status-running { color: var(--info); border-color: var(--info); background: color-mix(in srgb, var(--info) 8%, transparent); }
+.run-status-queued { color: var(--muted); }
+.run-status-cancelled { color: var(--muted); }
+.run-meta .run-error { color: var(--danger); }
+.workflow-log {
+    background: var(--ink); color: #d6d2c4;
+    padding: 14px 16px; margin: 0;
+    font: 11px/1.6 var(--mono);
+    max-height: 600px; overflow: auto;
+    white-space: pre-wrap; word-break: break-all;
+}
 .repository-nav { display: flex; gap: 0; margin-top: 10px; border-bottom: 1px solid var(--line); overflow-x: auto; }
 .repository-nav a { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 12px; }
 .repository-nav a.is-active { border-bottom-color: var(--accent); color: var(--accent); }

@@ -48,6 +48,7 @@ $__rh = \App\Services\RepositoryService::headerStats((int) $repository['id']);
     <a class="<?= active_class(($activeTab ?? '') === 'issues') ?>" href="<?= e(repo_url($repository, 'issues')) ?>"><?= t('Issues') ?><?php if (isset($repository['issue_count'])): ?><span><?= e($repository['issue_count']) ?></span><?php endif; ?></a>
     <a class="<?= active_class(($activeTab ?? '') === 'pulls') ?>" href="<?= e(repo_url($repository, 'pulls')) ?>"><?= t('Pull requests') ?><?php if (isset($repository['pull_count'])): ?><span><?= e($repository['pull_count']) ?></span><?php endif; ?></a>
     <a class="<?= active_class(($activeTab ?? '') === 'wiki') ?>" href="<?= e(repo_url($repository, 'wiki')) ?>"><?= t('Wiki') ?></a>
+    <a class="<?= active_class(($activeTab ?? '') === 'actions') ?>" href="<?= e(repo_url($repository, 'actions')) ?>"><?= t('Actions') ?></a>
     <a class="<?= active_class(($activeTab ?? '') === 'insights') ?>" href="<?= e(repo_url($repository, 'insights')) ?>"><?= t('Insights') ?></a>
     <a class="<?= active_class(($activeTab ?? '') === 'history') ?>" href="<?= e(repo_url($repository, 'commits')) ?>"><?= t('History') ?></a>
     <?php if (\App\Core\Auth::canWrite($repository)): ?><a class="<?= active_class(($activeTab ?? '') === 'settings') ?>" href="<?= e(repo_url($repository, 'settings')) ?>"><?= t('Settings') ?></a><?php endif; ?>

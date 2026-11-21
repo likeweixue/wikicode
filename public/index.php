@@ -119,6 +119,11 @@ try {
     Router::post('/{owner}/{repo}/watch', [RepositoryController::class, 'toggleWatch']);
     Router::post('/{owner}/{repo}/fork', [RepositoryController::class, 'fork']);
 
+    // Actions / Workflows
+    Router::get('/{owner}/{repo}/actions', [\App\Controllers\WorkflowController::class, 'index']);
+    Router::post('/{owner}/{repo}/actions/trigger', [\App\Controllers\WorkflowController::class, 'trigger']);
+    Router::get('/{owner}/{repo}/actions/runs/{runId}', [\App\Controllers\WorkflowController::class, 'show']);
+
     // Wiki
     Router::get('/{owner}/{repo}/wiki', [WikiController::class, 'index']);
     Router::get('/{owner}/{repo}/wiki/_new', [WikiController::class, 'create']);

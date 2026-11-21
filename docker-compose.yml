@@ -39,6 +39,8 @@ services:
       - repository-data:/var/www/html/storage/repositories
       - repository-locks:/var/www/html/storage/locks
       - release-data:/var/www/html/storage/releases
+      # 让容器内的 docker CLI 能调用宿主机 Docker（用于 workflow 隔离执行）
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   mysql-data:
